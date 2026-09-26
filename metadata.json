@@ -1,0 +1,6 @@
+{
+  "name": "Dairy Farm ERP - Offline-Ready Farm Management System",
+  "description": "Professional, offline-first Dairy Farm ERP for local web and Android. Features female & male herd management, individual cow & shift milk tracking with weighted Fat/SNF, group-based feed (Maund/KG), veterinary health automation, breeding cycles, customer sales & invoices, worker ledger, expenses, and automated reminders.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
