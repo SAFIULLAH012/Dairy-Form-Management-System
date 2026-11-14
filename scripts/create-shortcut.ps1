@@ -5,7 +5,7 @@ $baseDir = Split-Path -Parent $PSScriptRoot
 
 $shortcutPath = Join-Path $desktop "BA Farm.lnk"
 $exePath = Join-Path $baseDir "DairyFarmERP.exe"
-$icoPath = Join-Path $baseDir "ba-farm.ico"
+$icoPath = Join-Path $baseDir "app-icon.ico"
 
 $shortcut = $wsh.CreateShortcut($shortcutPath)
 $shortcut.TargetPath = $exePath
