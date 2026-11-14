@@ -11,6 +11,23 @@ export default defineConfig(() => {
         '@': path.resolve(import.meta.dirname || process.cwd(), '.'),
       },
     },
+    build: {
+      // Raise chunk size warning threshold — single-page desktop ERP intentionally bundles all features
+      chunkSizeWarningLimit: 1000,
+      rollupOptions: {
+        output: {
+          // Split vendor libraries into separate chunks for better caching
+          manualChunks(id: string) {
+            if (id.includes('node_modules/react') || id.includes('node_modules/react-dom')) {
+              return 'vendor-react';
+            }
+            if (id.includes('node_modules/lucide-react')) {
+              return 'vendor-icons';
+            }
+          },
+        },
+      },
+    },
     server: {
       // HMR is disabled in AI Studio via DISABLE_HMR env var.
       // Do not modify—file watching is disabled to prevent flickering during agent edits.
