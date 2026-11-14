@@ -57,14 +57,23 @@ namespace DairyFarmERP
 
                 // 3. Setup System Tray Icon for Background Lifecycle Management
                 trayIcon = new NotifyIcon();
-                trayIcon.Text = "Dairy Farm ERP (Offline)";
-                trayIcon.Icon = SystemIcons.Application;
+                trayIcon.Text = "BA Farm - Dairy ERP";
+                string iconPath = Path.Combine(baseDir, "ba-farm.ico");
+                if (File.Exists(iconPath))
+                {
+                    try { trayIcon.Icon = new Icon(iconPath); }
+                    catch { trayIcon.Icon = SystemIcons.Application; }
+                }
+                else
+                {
+                    trayIcon.Icon = SystemIcons.Application;
+                }
                 trayIcon.Visible = true;
 
                 ContextMenu menu = new ContextMenu();
-                menu.MenuItems.Add(new MenuItem("Open Dairy Farm ERP", (s, e) => LaunchAppWindow()));
+                menu.MenuItems.Add(new MenuItem("Open BA Farm", (s, e) => LaunchAppWindow()));
                 menu.MenuItems.Add(new MenuItem("-"));
-                menu.MenuItems.Add(new MenuItem("Exit Dairy Farm ERP", (s, e) =>
+                menu.MenuItems.Add(new MenuItem("Exit BA Farm", (s, e) =>
                 {
                     ShutdownApp();
                 }));
@@ -74,8 +83,8 @@ namespace DairyFarmERP
 
                 trayIcon.ShowBalloonTip(
                     3000,
-                    "Dairy Farm ERP",
-                    "Application is running. Access it anytime from the system tray or by clicking Open.",
+                    "BA Farm",
+                    "BA Farm is active. Access it anytime from the system tray or double-click to open.",
                     ToolTipIcon.Info
                 );
 

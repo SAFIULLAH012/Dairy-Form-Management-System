@@ -16,7 +16,8 @@
     "lint": "tsc --noEmit",
     "test": "tsx tests/domain.test.ts",
     "test:perf": "tsx tests/performance.test.ts",
-    "build:exe": "C:\\Windows\\Microsoft.NET\\Framework64\\v4.0.30319\\csc.exe /target:winexe /platform:anycpu /optimize+ /out:DairyFarmERP.exe /reference:System.Windows.Forms.dll /reference:System.Drawing.dll scripts\\launcher\\DairyFarmERP.cs"
+    "build:exe": "C:\\Windows\\Microsoft.NET\\Framework64\\v4.0.30319\\csc.exe /target:winexe /platform:anycpu /optimize+ /win32icon:ba-farm.ico /out:DairyFarmERP.exe /reference:System.Windows.Forms.dll /reference:System.Drawing.dll scripts\\launcher\\DairyFarmERP.cs",
+    "shortcut": "powershell -ExecutionPolicy Bypass -File scripts/create-shortcut.ps1"
   },
   "dependencies": {
     "@google/genai": "^2.4.0",
