@@ -135,25 +135,50 @@ dairy-farm-erp/
 │
 ├── 📄 electron.js              # Electron Windows desktop entry (single-instance & process management)
 ├── 📄 server.ts                # Server entry point & environment bootstrapper
-├── 📄 loading.html             # App loading screen
 ├── 📄 start-server.bat         # Quick browser launcher (Windows)
 ├── 📄 start-windows-app.bat    # Quick Electron desktop launcher (Windows)
 ├── 📄 package.json             # Project config & scripts
+├── 📄 index.html               # Vite HTML entry (must stay at root)
+│
+├── 📂 docs/                    # Project documentation
+│   ├── USER_MANUAL.md          # End-user operation manual
+│   └── USAGE_GUIDE.md          # Developer usage guide
+│
+├── 📂 scripts/                 # Build & packaging scripts
+│   └── sfx_config.txt          # Self-extracting archive config (Windows installer)
+│
+├── 📂 public/                  # Static assets served by Vite & Electron
+│   └── loading.html            # App loading screen (shown while backend starts)
 │
 ├── 📂 src/
-│   ├── 📂 client/              # API client layer with offline fallback
-│   │   └── api.ts              # Strongly typed REST client
+│   ├── 📂 api/                 # API client layer with offline fallback
+│   │   └── api.ts              # Strongly typed REST client (all HTTP calls)
 │   │
 │   ├── 📂 components/          # Reusable UI components
 │   │   ├── Sidebar.tsx         # Navigation sidebar
 │   │   ├── Header.tsx          # Top header bar
-│   │   └── ...
+│   │   ├── Modal.tsx           # Base modal wrapper
+│   │   ├── AnimalProfileModal.tsx
+│   │   ├── IndividualMilkModal.tsx
+│   │   ├── AnimalSearchInput.tsx
+│   │   ├── ErrorBoundary.tsx
+│   │   └── QuickAddModal.tsx
 │   │
 │   ├── 📂 domain/              # Clean Architecture Domain Core
 │   │   ├── types.ts            # Enterprise domain entities & DTOs
 │   │   ├── repositories.ts     # Domain repository interfaces
 │   │   ├── calculations.ts     # Pure mathematical domain rules (SNF, Maunds, etc.)
 │   │   └── services/           # Domain business services (Animal, Milk, Sales, etc.)
+│   │       ├── AnimalService.ts
+│   │       ├── MilkCalculationService.ts
+│   │       ├── SalesInvoiceService.ts
+│   │       ├── HealthBreedingService.ts
+│   │       ├── FeedInventoryService.ts
+│   │       ├── ReminderService.ts
+│   │       ├── ReportService.ts
+│   │       ├── CsvDataService.ts
+│   │       ├── AuditBackupService.ts
+│   │       └── LocalAppService.ts
 │   │
 │   ├── 📂 infrastructure/      # Technical infrastructure & storage
 │   │   ├── database/
@@ -161,16 +186,24 @@ dairy-farm-erp/
 │   │   │   ├── migrations.ts   # Versioned schema migrations
 │   │   │   └── repositories.ts # Concrete SQLite repository implementations
 │   │   └── platform/           # Platform abstraction (Windows Desktop / Web)
+│   │       ├── interfaces.ts
+│   │       ├── index.ts
+│   │       └── web/
+│   │           └── WebAdapters.ts
 │   │
 │   ├── 📂 server/              # Modular Enterprise Backend Architecture
 │   │   ├── container.ts        # Dependency Injection / Service Registry
 │   │   ├── app.ts              # Express application factory
-│   │   ├── middleware/         # Error handling & request validation
+│   │   ├── logger.ts           # Structured logging
+│   │   ├── backupManager.ts    # Automated backup management
+│   │   ├── middleware/
+│   │   │   └── errorHandler.ts # Global error handler
 │   │   └── routes/             # Isolated domain route controllers
 │   │       ├── animal.routes.ts
 │   │       ├── milk.routes.ts
 │   │       ├── feed.routes.ts
 │   │       ├── inventory.routes.ts
+│   │       ├── health.routes.ts
 │   │       ├── healthCare.routes.ts
 │   │       ├── breeding.routes.ts
 │   │       ├── sales.routes.ts
@@ -187,12 +220,25 @@ dairy-farm-erp/
 │       ├── AnimalsPage.tsx
 │       ├── MilkPage.tsx
 │       ├── HealthPage.tsx
-│       ├── SettingsPage.tsx
-│       └── ...
+│       ├── BreedingPage.tsx
+│       ├── FeedPage.tsx
+│       ├── InventoryPage.tsx
+│       ├── SalesPage.tsx
+│       ├── CustomersPage.tsx
+│       ├── ExpensesPage.tsx
+│       ├── WorkersPage.tsx
+│       ├── RemindersPage.tsx
+│       ├── ReportsPage.tsx
+│       ├── VaccinationPage.tsx
+│       ├── CowProfilesPage.tsx
+│       ├── MaleAnimalsPage.tsx
+│       └── SettingsPage.tsx
 │
 ├── 📂 tests/                   # Domain & benchmark test suites
-├── 📂 public/                  # Static assets
-└── 📂 dist/                    # Production bundle output
+│   ├── domain.test.ts          # Business logic unit tests
+│   └── performance.test.ts     # Performance benchmarks
+│
+└── 📂 dist/                    # Production bundle output (git-ignored)
 ```
 
 ---

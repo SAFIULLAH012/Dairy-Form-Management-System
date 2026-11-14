@@ -41,7 +41,7 @@ if (!gotTheLock) {
     });
 
     // Show loading screen while backend initializes
-    mainWindow.loadFile(path.join(APP_DIR, 'loading.html'));
+    mainWindow.loadFile(path.join(APP_DIR, 'public', 'loading.html'));
     mainWindow.show();
 
     // Poll backend health check until it responds

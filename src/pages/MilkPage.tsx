@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { api } from '../client/api.ts';
+import { api } from '../api/api.ts';
 import { Modal } from '../components/Modal.tsx';
-import { IndividualMilkModal } from './IndividualMilkModal.tsx';
+import { IndividualMilkModal } from '../components/IndividualMilkModal.tsx';
 import {
   Milk,
   Plus,

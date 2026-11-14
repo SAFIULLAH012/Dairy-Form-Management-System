@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { api } from '../client/api.ts';
+import { api } from '../api/api.ts';
 import { BarChart3, Calendar, Printer, Download, TrendingUp, AlertCircle } from 'lucide-react';
 
 export const ReportsPage: React.FC = () => {

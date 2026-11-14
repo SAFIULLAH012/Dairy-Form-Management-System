@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { api } from '../client/api.ts';
+import { api } from '../api/api.ts';
 import { Modal } from '../components/Modal.tsx';
 import { Users, Plus, Phone, Building2, Receipt, ArrowRight } from 'lucide-react';
 

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { api } from '../client/api.ts';
+import { api } from '../api/api.ts';
 import { Modal } from '../components/Modal.tsx';
 import { AnimalSearchInput } from '../components/AnimalSearchInput.tsx';
 import { Syringe, Plus, Calendar, AlertTriangle, CheckCircle2 } from 'lucide-react';

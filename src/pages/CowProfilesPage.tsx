@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { api } from '../client/api.ts';
+import { api } from '../api/api.ts';
 import {
   Search,
   X,

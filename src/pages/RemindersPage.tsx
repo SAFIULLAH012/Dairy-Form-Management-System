@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { api } from '../client/api.ts';
+import { api } from '../api/api.ts';
 import { Modal } from '../components/Modal.tsx';
 import { NavItem } from '../components/Sidebar.tsx';
 import { Bell, Plus, CheckCircle, Trash2, ArrowRight, AlertTriangle, Clock } from 'lucide-react';

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { api } from '../client/api.ts';
-import { Modal } from '../components/Modal.tsx';
+import { api } from '../api/api.ts';
+import { Modal } from './Modal.tsx';
 import { X, CheckCircle, AlertTriangle, ArrowLeft } from 'lucide-react';
 
 interface CowDraftEntry {

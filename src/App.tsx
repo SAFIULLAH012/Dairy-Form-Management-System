@@ -20,7 +20,7 @@ import { ExpensesPage } from './pages/ExpensesPage.tsx';
 import { ReportsPage } from './pages/ReportsPage.tsx';
 import { SettingsPage } from './pages/SettingsPage.tsx';
 import { ErrorBoundary } from './components/ErrorBoundary.tsx';
-import { api } from './client/api.ts';
+import { api } from './api/api.ts';
 
 export default function App() {
   const [currentTab, setCurrentTab] = useState<NavItem>('dashboard');
