@@ -7,9 +7,14 @@ export function createAnimalRoutes(container: AppContainer): Router {
 
   router.get('/', async (req: Request, res: Response) => {
     try {
-      const sex = req.query.sex as 'Female' | 'Male' | undefined;
-      const status = req.query.status as string | undefined;
-      const group = req.query.group as string | undefined;
+      const rawSex = req.query.sex as string | undefined;
+      const rawStatus = req.query.status as string | undefined;
+      const rawGroup = req.query.group as string | undefined;
+
+      const sex = rawSex && rawSex !== 'undefined' && rawSex !== 'null' ? (rawSex as 'Female' | 'Male') : undefined;
+      const status = rawStatus && rawStatus !== 'undefined' && rawStatus !== 'null' ? rawStatus : undefined;
+      const group = rawGroup && rawGroup !== 'undefined' && rawGroup !== 'null' ? rawGroup : undefined;
+
       const animals = await animalService.listAnimals({ sex, status, group });
       res.json(animals);
     } catch (err: any) {

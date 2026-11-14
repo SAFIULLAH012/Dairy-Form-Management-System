@@ -51,8 +51,12 @@ export const api = {
   // --- ANIMALS ---
   async getAnimals(params?: { sex?: 'Female' | 'Male'; status?: string; group?: string }) {
     try {
-      const query = new URLSearchParams(params as any).toString();
-      return await fetchJson<any[]>(`/api/animals${query ? `?${query}` : ''}`);
+      const query = new URLSearchParams();
+      if (params?.sex) query.set('sex', params.sex);
+      if (params?.status) query.set('status', params.status);
+      if (params?.group) query.set('group', params.group);
+      const qs = query.toString();
+      return await fetchJson<any[]>(`/api/animals${qs ? `?${qs}` : ''}`);
     } catch {
       return getLocalApp().getAnimals(params);
     }

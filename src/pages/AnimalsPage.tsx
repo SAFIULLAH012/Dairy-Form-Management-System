@@ -145,6 +145,8 @@ export const AnimalsPage: React.FC = () => {
 
       const payload: any = {
         id: formData.id.trim(),
+        cowNumber: formData.id.trim(),
+        tag1: formData.id.trim(),
         sex: 'Female',
         dob: formData.dob || new Date().toISOString().slice(0, 10),
         breed: 'Unknown',
