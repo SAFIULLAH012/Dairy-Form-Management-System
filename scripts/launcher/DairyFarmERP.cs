@@ -18,8 +18,8 @@ namespace DairyFarmERP
         private static extern bool ShowWindow(IntPtr hWnd, int nCmdShow);
 
         private const int PORT = 3001;
-        private static readonly string HEALTH_URL = "http://localhost:" + PORT + "/api/health";
-        private static readonly string APP_URL = "http://localhost:" + PORT;
+        private static readonly string HEALTH_URL = "http://127.0.0.1:" + PORT + "/api/health";
+        private static readonly string APP_URL = "http://127.0.0.1:" + PORT;
 
         private static NotifyIcon trayIcon;
         private static Process serverProcess;
@@ -136,6 +136,9 @@ namespace DairyFarmERP
             };
             psi.EnvironmentVariables["PORT"] = PORT.ToString();
             psi.EnvironmentVariables["NODE_ENV"] = "production";
+
+            // Free port 3001 if occupied by an unresponsive or orphan process
+            FreePortIfOccupied(PORT);
 
             try
             {
@@ -268,6 +271,56 @@ namespace DairyFarmERP
             return null;
         }
 
+        private static void FreePortIfOccupied(int port)
+        {
+            try
+            {
+                Process netstat = new Process
+                {
+                    StartInfo = new ProcessStartInfo
+                    {
+                        FileName = "cmd.exe",
+                        Arguments = "/c netstat -ano | findstr :" + port,
+                        UseShellExecute = false,
+                        RedirectStandardOutput = true,
+                        CreateNoWindow = true
+                    }
+                };
+                netstat.Start();
+                string output = netstat.StandardOutput.ReadToEnd();
+                netstat.WaitForExit();
+
+                char[] sep = new char[] { '\r', '\n' };
+                string[] lines = output.Split(sep, StringSplitOptions.RemoveEmptyEntries);
+                foreach (string line in lines)
+                {
+                    if (line.Contains("LISTENING") || line.Contains("LISTEN"))
+                    {
+                        string[] parts = line.Trim().Split(new char[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+                        if (parts.Length > 0)
+                        {
+                            string pidStr = parts[parts.Length - 1];
+                            int pid;
+                            if (int.TryParse(pidStr, out pid) && pid > 0)
+                            {
+                                try
+                                {
+                                    Process p = Process.GetProcessById(pid);
+                                    if (p.ProcessName.ToLower().Contains("node"))
+                                    {
+                                        KillProcessTree(p);
+                                        Thread.Sleep(500);
+                                    }
+                                }
+                                catch { }
+                            }
+                        }
+                    }
+                }
+            }
+            catch { }
+        }
+
         private static void ShutdownApp()
         {
             try
@@ -281,10 +334,27 @@ namespace DairyFarmERP
 
                 if (serverProcess != null && !serverProcess.HasExited)
                 {
+                    KillProcessTree(serverProcess);
+                }
+            }
+            catch { }
+            finally
+            {
+                Application.Exit();
+            }
+        }
+
+        private static void KillProcessTree(Process proc)
+        {
+            if (proc == null) return;
+            try
+            {
+                if (!proc.HasExited)
+                {
                     Process killer = Process.Start(new ProcessStartInfo
                     {
                         FileName = "taskkill",
-                        Arguments = "/PID " + serverProcess.Id + " /T /F",
+                        Arguments = "/PID " + proc.Id + " /T /F",
                         CreateNoWindow = true,
                         UseShellExecute = false
                     });
@@ -295,10 +365,6 @@ namespace DairyFarmERP
                 }
             }
             catch { }
-            finally
-            {
-                Application.Exit();
-            }
         }
     }
 }
