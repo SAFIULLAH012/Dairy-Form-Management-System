@@ -43,6 +43,9 @@ namespace DairyFarmERP
 
                 baseDir = AppDomain.CurrentDomain.BaseDirectory;
 
+                // Automatically ensure custom Desktop shortcut with round farm icon is created
+                EnsureDesktopShortcut();
+
                 // 1. Ensure backend server is running
                 if (!CheckServerHealth())
                 {
@@ -348,6 +351,37 @@ namespace DairyFarmERP
             {
                 Application.Exit();
             }
+        }
+
+        private static void EnsureDesktopShortcut()
+        {
+            try
+            {
+                string desktop = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
+                string shortcutPath = Path.Combine(desktop, "BA Farm.lnk");
+                string exePath = Path.Combine(baseDir, "DairyFarmERP.exe");
+                string iconPath = Path.Combine(baseDir, "ba-farm.ico");
+
+                Type shellType = Type.GetTypeFromProgID("WScript.Shell");
+                if (shellType != null)
+                {
+                    object shell = Activator.CreateInstance(shellType);
+                    object shortcut = shellType.InvokeMember("CreateShortcut", System.Reflection.BindingFlags.InvokeMethod, null, shell, new object[] { shortcutPath });
+                    if (shortcut != null)
+                    {
+                        Type scType = shortcut.GetType();
+                        scType.InvokeMember("TargetPath", System.Reflection.BindingFlags.SetProperty, null, shortcut, new object[] { exePath });
+                        scType.InvokeMember("WorkingDirectory", System.Reflection.BindingFlags.SetProperty, null, shortcut, new object[] { baseDir });
+                        scType.InvokeMember("Description", System.Reflection.BindingFlags.SetProperty, null, shortcut, new object[] { "BA Farm Management System" });
+                        if (File.Exists(iconPath))
+                        {
+                            scType.InvokeMember("IconLocation", System.Reflection.BindingFlags.SetProperty, null, shortcut, new object[] { iconPath + ",0" });
+                        }
+                        scType.InvokeMember("Save", System.Reflection.BindingFlags.InvokeMethod, null, shortcut, null);
+                    }
+                }
+            }
+            catch { }
         }
 
         private static void KillProcessTree(Process proc)
