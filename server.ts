@@ -21,7 +21,11 @@ export async function startServer() {
   const app = createApp(container);
 
   // 3. Mount Static Assets / Vite Middleware
-  if (process.env.NODE_ENV !== 'production') {
+  const distPath = path.resolve(__dirname, 'dist');
+  const hasDist = fs.existsSync(path.resolve(distPath, 'index.html'));
+  const isViteDev = process.env.VITE_DEV === 'true' || (process.env.NODE_ENV === 'development' && !hasDist);
+
+  if (isViteDev) {
     const { createServer: createViteServer } = await import('vite');
     const vite = await createViteServer({
       server: { middlewareMode: true },
@@ -40,7 +44,6 @@ export async function startServer() {
       }
     });
   } else {
-    const distPath = path.resolve(__dirname, 'dist');
     app.use(express.static(distPath));
     app.get('*', (_req, res) => {
       res.sendFile(path.resolve(distPath, 'index.html'));
