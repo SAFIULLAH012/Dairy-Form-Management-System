@@ -46,10 +46,20 @@ export const VaccinationPage: React.FC = () => {
   }, []);
 
   const handleSaveVaccination = async () => {
+    if (formData.nextDueDate && formData.lastDate && formData.nextDueDate < formData.lastDate) {
+      alert('Next due date cannot be earlier than the vaccination date.');
+      return;
+    }
+    const parsedCost = formData.cost ? parseFloat(formData.cost) : undefined;
+    if (formData.cost && isNaN(parsedCost!)) {
+      alert('Please enter a valid numeric cost.');
+      return;
+    }
+
     try {
       await api.recordVaccination({
         ...formData,
-        cost: formData.cost ? parseFloat(formData.cost) : undefined,
+        cost: parsedCost != null ? Math.max(0, parsedCost) : undefined,
       });
 
       setShowAddModal(false);

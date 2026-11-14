@@ -92,23 +92,22 @@ export class MilkCalculationService {
     }
 
     const activeFemales = await this.animalRepo.listAll({ sex: 'Female', status: 'Active' });
-    const activeFemaleIds = new Set(activeFemales.map(a => a.id));
-
-    // Verify all active cows are accounted for
+    // Verify all active adult/milking cows are accounted for (calves and maiden heifers excluded)
+    const requiredCows = activeFemales.filter(a => a.stage === 'Adult' || a.milkStatus === 'Milking');
     const accountedIds = new Set(params.entries.map(e => e.animalId));
-    const missingCows = activeFemales.filter(a => !accountedIds.has(a.id));
+    const missingCows = requiredCows.filter(a => !accountedIds.has(a.id));
 
     if (missingCows.length > 0) {
       throw new Error(
-        `Cannot complete shift: ${missingCows.length} cows are still unaccounted for (${missingCows
+        `Cannot complete shift: ${missingCows.length} milking cows are still unaccounted for (${missingCows
           .slice(0, 5)
           .map(c => c.id)
-          .join(', ')}${missingCows.length > 5 ? '...' : ''}). Every cow must have litres or a designated reason.`
+          .join(', ')}${missingCows.length > 5 ? '...' : ''}). Every milking cow must have litres or a designated reason.`
       );
     }
 
     // Calculate metrics
-    const metrics = calculateMilkWeighted(params.entries, activeFemales.length);
+    const metrics = calculateMilkWeighted(params.entries, requiredCows.length);
 
     // Prepare individual records
     const indRecords: MilkIndividualEntry[] = params.entries.map(e => ({

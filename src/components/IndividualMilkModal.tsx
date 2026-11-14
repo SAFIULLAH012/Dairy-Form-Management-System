@@ -59,7 +59,8 @@ export const IndividualMilkModal: React.FC<IndividualMilkModalProps> = ({
       ]);
 
       setShiftsList(shifts);
-      setCows(femaleCows);
+      const milkingCows = femaleCows.filter(c => c.stage === 'Adult' || c.milkStatus === 'Milking');
+      setCows(milkingCows);
 
       // Populate drafts with existing records
       const initialDrafts: Record<string, CowDraftEntry> = {};

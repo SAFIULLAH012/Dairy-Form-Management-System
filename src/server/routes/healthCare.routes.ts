@@ -9,8 +9,10 @@ export function createHealthCareRoutes(container: AppContainer): Router {
   // Health Cases
   router.get('/health/cases', async (req: Request, res: Response) => {
     try {
-      const animalId = req.query.animalId as string | undefined;
-      const status = req.query.status as string | undefined;
+      const rawId = req.query.animalId as string | undefined;
+      const rawStatus = req.query.status as string | undefined;
+      const animalId = rawId && rawId !== 'undefined' && rawId !== 'null' ? rawId : undefined;
+      const status = rawStatus && rawStatus !== 'undefined' && rawStatus !== 'null' ? rawStatus : undefined;
       const cases = await healthRepo.listCases({ animalId, status });
       res.json(cases);
     } catch (err: any) {
@@ -39,7 +41,8 @@ export function createHealthCareRoutes(container: AppContainer): Router {
   // Vaccinations
   router.get('/vaccinations', async (req: Request, res: Response) => {
     try {
-      const animalId = req.query.animalId as string | undefined;
+      const rawId = req.query.animalId as string | undefined;
+      const animalId = rawId && rawId !== 'undefined' && rawId !== 'null' ? rawId : undefined;
       const list = await vaccineRepo.listRecords({ animalId });
       res.json(list);
     } catch (err: any) {

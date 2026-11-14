@@ -69,16 +69,19 @@ export class AuditBackupService {
 
   async generateFullBackup(): Promise<BackupPayload> {
     const animals = await this.animalRepo.listAll();
+    const statusHistory = await this.animalRepo.getStatusHistory();
     const groups = await this.settingsRepo.getGroups();
     const settings = await this.settingsRepo.getSettings();
     const shifts = await this.milkRepo.getShifts();
     const milkTotals = await this.milkRepo.listTotalEntries();
+    const milkIndividuals = await this.milkRepo.listIndividualEntries();
     const feedTxs = await this.feedRepo.listTransactions();
     const invItems = await this.inventoryRepo.listItems();
     const invTxs = await this.inventoryRepo.listTransactions();
     const healthCases = await this.healthRepo.listCases();
     const vaccinations = await this.vaccineRepo.listRecords();
     const breeding = await this.breedingRepo.listRecords();
+    const growthMeasurements = await this.growthRepo.listByAnimal();
     const customers = await this.customerRepo.listAll();
     const invoices = await this.deliveryRepo.listInvoices();
     const payments = await this.paymentRepo.listAll();
@@ -94,18 +97,18 @@ export class AuditBackupService {
       appVersion: '1.0.0',
       data: {
         animals,
-        statusHistory: [],
+        statusHistory,
         groups,
         shifts,
         milkTotals,
-        milkIndividuals: [],
+        milkIndividuals,
         feedTransactions: feedTxs,
         inventoryItems: invItems,
         inventoryTransactions: invTxs,
         healthCases,
         vaccinations,
         breedingRecords: breeding,
-        growthMeasurements: [],
+        growthMeasurements,
         customers,
         invoices,
         payments,
@@ -163,6 +166,9 @@ export class AuditBackupService {
     counts.vaccinations = Array.isArray(content.data.vaccinations) ? content.data.vaccinations.length : 0;
     counts.breedingRecords = Array.isArray(content.data.breedingRecords) ? content.data.breedingRecords.length : 0;
     counts.workers = Array.isArray(content.data.workers) ? content.data.workers.length : 0;
+    counts.statusHistory = Array.isArray(content.data.statusHistory) ? content.data.statusHistory.length : 0;
+    counts.milkIndividuals = Array.isArray(content.data.milkIndividuals) ? content.data.milkIndividuals.length : 0;
+    counts.growthMeasurements = Array.isArray(content.data.growthMeasurements) ? content.data.growthMeasurements.length : 0;
 
     return {
       isValid: errors.length === 0,
@@ -183,11 +189,35 @@ export class AuditBackupService {
         const existing = await this.animalRepo.findById(item.id);
         if (existing) await this.animalRepo.update(item);
         else await this.animalRepo.create(item);
+        // Ensure primary cow number identifier is registered
+        await this.animalRepo.addIdentifier({
+          id: `${item.id}_PRIMARY`,
+          animalId: item.id,
+          type: 'COW_NUMBER',
+          value: item.id,
+        }).catch(() => {});
+      }
+    }
+    if (Array.isArray(data.statusHistory)) {
+      for (const item of data.statusHistory) {
+        await this.animalRepo.addStatusHistory(item);
       }
     }
     if (Array.isArray(data.milkTotals)) {
       for (const item of data.milkTotals) {
         await this.milkRepo.saveTotalEntry(item);
+      }
+    }
+    if (Array.isArray(data.milkIndividuals)) {
+      const grouped: Record<string, any[]> = {};
+      for (const item of data.milkIndividuals) {
+        const key = `${item.date}__${item.shift}`;
+        if (!grouped[key]) grouped[key] = [];
+        grouped[key].push(item);
+      }
+      for (const [key, items] of Object.entries(grouped)) {
+        const [date, shift] = key.split('__');
+        await this.milkRepo.saveIndividualEntries(date, shift, items);
       }
     }
     if (Array.isArray(data.feedTransactions)) {
@@ -215,6 +245,11 @@ export class AuditBackupService {
     if (Array.isArray(data.breedingRecords)) {
       for (const item of data.breedingRecords) {
         await this.breedingRepo.createRecord(item);
+      }
+    }
+    if (Array.isArray(data.growthMeasurements)) {
+      for (const item of data.growthMeasurements) {
+        await this.growthRepo.createMeasurement(item);
       }
     }
     if (Array.isArray(data.customers)) {

@@ -158,8 +158,9 @@ export const AnimalsPage: React.FC = () => {
       };
       
       if (formData.originType === 'Purchased') {
-        payload.purchasePrice = formData.purchasePrice ? parseFloat(formData.purchasePrice) : 0;
-        payload.supplier = formData.supplier;
+        const parsedPrice = parseFloat(formData.purchasePrice || '0');
+        payload.purchasePrice = isNaN(parsedPrice) ? 0 : Math.max(0, parsedPrice);
+        payload.supplier = formData.supplier.trim();
         payload.purchaseDate = new Date().toISOString().slice(0, 10);
       } else {
         payload.purchasePrice = 0;

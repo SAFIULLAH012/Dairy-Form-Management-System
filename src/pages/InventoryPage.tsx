@@ -74,17 +74,23 @@ export const InventoryPage: React.FC = () => {
   };
 
   const handleSaveItem = async () => {
-    if (!itemForm.name.trim()) {
+    const trimmedName = itemForm.name.trim();
+    if (!trimmedName) {
       alert('Please enter an item name.');
+      return;
+    }
+    const threshold = parseFloat(itemForm.minStockThreshold || '0');
+    if (isNaN(threshold) || threshold < 0) {
+      alert('Threshold must be 0 or greater.');
       return;
     }
     try {
       await api.createInventoryItem({
-        id: `INV_${Date.now()}`,
-        name: itemForm.name,
+        id: `INV_${Date.now()}_${Math.random().toString(36).substr(2, 4)}`,
+        name: trimmedName,
         category: itemForm.category,
         unit: itemForm.unit,
-        minStockThreshold: parseFloat(itemForm.minStockThreshold || '0'),
+        minStockThreshold: threshold,
         currentStock: 0,
       });
       setShowAddItemModal(false);

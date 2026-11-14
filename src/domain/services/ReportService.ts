@@ -5,6 +5,7 @@ import {
   IPaymentRepository,
   IExpenseRepository,
   IAnimalRepository,
+  IWorkerRepository,
 } from '../repositories.ts';
 import { reconcileMilkSales } from '../calculations.ts';
 
@@ -15,7 +16,8 @@ export class ReportService {
     private deliveryRepo: IDeliveryRepository,
     private paymentRepo: IPaymentRepository,
     private expenseRepo: IExpenseRepository,
-    private animalRepo: IAnimalRepository
+    private animalRepo: IAnimalRepository,
+    private workerRepo?: IWorkerRepository
   ) {}
 
   async generateFinancialReport(fromDate: string, toDate: string) {
@@ -25,11 +27,12 @@ export class ReportService {
     const payments = await this.paymentRepo.listAll(fromDate, toDate);
     const expenses = await this.expenseRepo.listExpenses({ fromDate, toDate });
 
-    // Fetch animals sold within the report period
+    // Fetch animals sold within the report period (slice date to prevent ISO format comparison mismatch)
     const allAnimals = await this.animalRepo.listAll({ status: 'Sold' });
-    const soldInPeriod = allAnimals.filter(a =>
-      a.saleDate && a.saleDate >= fromDate && a.saleDate <= toDate
-    );
+    const soldInPeriod = allAnimals.filter(a => {
+      const sDate = a.saleDate ? a.saleDate.slice(0, 10) : '';
+      return sDate && sDate >= fromDate && sDate <= toDate;
+    });
     const totalAnimalSalesRevenue = soldInPeriod.reduce((s, a) => s + (a.salePrice || 0), 0);
 
     // Sum calculations
@@ -38,11 +41,33 @@ export class ReportService {
     const totalMilkDeliveredLitres = invoices.reduce((s, i) => s + i.litres, 0);
     const totalCashReceived = payments.reduce((s, p) => s + p.amount, 0);
     const totalFeedCost = feedTxs.reduce((s, f) => s + f.totalCost, 0);
+
+    // Fetch worker salaries if workerRepo is available (Issue #1)
+    let totalWorkerSalaries = 0;
+    if (this.workerRepo) {
+      try {
+        const workerTxs = await this.workerRepo.listTransactions();
+        const periodTxs = workerTxs.filter(t => {
+          const tDate = t.date ? t.date.slice(0, 10) : '';
+          return tDate >= fromDate && tDate <= toDate && (t.type === 'Salary Payment' || t.type === 'Advance');
+        });
+        totalWorkerSalaries = periodTxs.reduce((s, t) => s + (t.amount || 0), 0);
+      } catch (err) {
+        console.warn('Could not fetch worker transactions for financial report:', err);
+      }
+    }
+
+    // Prevent double counting feed bills when daily feed consumption is already logged (Issue #2)
+    const nonFeedExpenses = expenses.filter(e => e.category !== 'Feed');
+    const feedCategoryExpenses = expenses.filter(e => e.category === 'Feed');
+    const totalNonFeedExpenses = nonFeedExpenses.reduce((s, e) => s + e.amount, 0);
+    const totalFeedBills = feedCategoryExpenses.reduce((s, e) => s + e.amount, 0);
     const totalExpenses = expenses.reduce((s, e) => s + e.amount, 0);
 
-    // Total income now includes milk sales + animal sale revenue
-    const totalIncome = totalMilkSales + totalAnimalSalesRevenue;
-    const totalCosts = totalFeedCost + totalExpenses;
+    // Effective operational costs: if daily feed consumption is logged, use that + non-feed expenses + payroll
+    const effectiveFeedCost = totalFeedCost > 0 ? totalFeedCost : totalFeedBills;
+    const totalIncome = Number((totalMilkSales + totalAnimalSalesRevenue).toFixed(2));
+    const totalCosts = Number((effectiveFeedCost + totalNonFeedExpenses + totalWorkerSalaries).toFixed(2));
     const netProfitOrLoss = Number((totalIncome - totalCosts).toFixed(2));
 
     // Milk reconciliation
@@ -52,6 +77,9 @@ export class ReportService {
     const expensesByCategory: Record<string, number> = {};
     for (const e of expenses) {
       expensesByCategory[e.category] = (expensesByCategory[e.category] || 0) + e.amount;
+    }
+    if (totalWorkerSalaries > 0 && !expensesByCategory['Labour']) {
+      expensesByCategory['Labour'] = totalWorkerSalaries;
     }
 
     // Daily milk trend map
@@ -71,11 +99,12 @@ export class ReportService {
         totalMilkDeliveredLitres: Number(totalMilkDeliveredLitres.toFixed(1)),
         totalMilkSales: Number(totalMilkSales.toFixed(2)),
         totalAnimalSalesRevenue: Number(totalAnimalSalesRevenue.toFixed(2)),
-        totalIncome: Number(totalIncome.toFixed(2)),
+        totalIncome,
         totalCashReceived: Number(totalCashReceived.toFixed(2)),
-        totalFeedCost: Number(totalFeedCost.toFixed(2)),
+        totalFeedCost: Number(effectiveFeedCost.toFixed(2)),
+        totalWorkerSalaries: Number(totalWorkerSalaries.toFixed(2)),
         totalExpenses: Number(totalExpenses.toFixed(2)),
-        totalCosts: Number(totalCosts.toFixed(2)),
+        totalCosts,
         netProfitOrLoss,
       },
       soldAnimals: soldInPeriod.map(a => ({

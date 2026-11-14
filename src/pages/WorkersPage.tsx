@@ -50,11 +50,17 @@ export const WorkersPage: React.FC = () => {
       alert('Worker name is required.');
       return;
     }
+    const salary = parseFloat(workerForm.monthlySalary || '0');
+    if (isNaN(salary) || salary < 0) {
+      alert('Please enter a valid monthly salary (0 or greater).');
+      return;
+    }
 
     try {
       await api.createWorker({
         ...workerForm,
-        monthlySalary: parseFloat(workerForm.monthlySalary || '0'),
+        name: workerForm.name.trim(),
+        monthlySalary: salary,
         status: 'Active',
       });
 

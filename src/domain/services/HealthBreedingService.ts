@@ -322,15 +322,28 @@ export class HealthBreedingService {
         milkStatus: 'Milking',
         updatedAt: now,
       });
+      await this.animalRepo.addStatusHistory({
+        id: `HIST_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`,
+        animalId: params.damId,
+        changeType: 'REPRODUCTIVE',
+        oldValue: dam.reproStatus,
+        newValue: 'Milking',
+        date: params.calvingDate,
+        reason: `Calved ${params.calfSex} calf ${params.calfId}`,
+        user,
+        createdAt: now,
+      }).catch(() => {});
     }
 
     // 3. Register Calf
     await this.animalRepo.create({
       id: params.calfId,
+      cowNumber: params.calfId,
+      tag1: params.calfId,
       sex: params.calfSex,
       dob: params.calvingDate,
       breed: params.calfBreed,
-      group: 'Low', // Calves start in low or starter group
+      group: 'Calves', // Assigned to dedicated Calves group
       stage: params.calfSex === 'Male' ? 'Male' : 'Calf',
       reproStatus: params.calfSex === 'Male' ? 'N/A' : 'Pending',
       milkStatus: params.calfSex === 'Male' ? 'N/A' : 'Not Milking',
@@ -342,6 +355,14 @@ export class HealthBreedingService {
       createdAt: now,
       updatedAt: now,
     });
+
+    // Ensure calf primary identifier is indexed for instant lookup
+    await this.animalRepo.addIdentifier({
+      id: `${params.calfId}_PRIMARY`,
+      animalId: params.calfId,
+      type: 'COW_NUMBER',
+      value: params.calfId,
+    }).catch(() => {});
 
     // 4. Initial Growth measurement if birth weight was entered
     if (params.birthWeight && params.birthWeight > 0) {

@@ -31,7 +31,8 @@ export class CsvDataService {
 
   // Parse CSV string into array of object rows
   parseCsv(csvText: string): Array<Record<string, string>> {
-    const lines = csvText
+    const cleanText = (csvText || '').replace(/^\uFEFF/, '');
+    const lines = cleanText
       .split(/\r?\n/)
       .map(l => l.trim())
       .filter(l => l.length > 0);
@@ -274,7 +275,7 @@ export class CsvDataService {
       if (preview.module === 'ANIMALS') {
         for (const a of preview.validRows) {
           this.db.run(
-            `INSERT INTO animals (
+            `INSERT OR REPLACE INTO animals (
               id, cow_number, tag1, tag2, sex, dob, breed, group_name,
               stage, repro_status, milk_status, status, notes, created_at, updated_at
             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
@@ -298,14 +299,14 @@ export class CsvDataService {
           );
 
           this.db.run(
-            `INSERT INTO animal_identifiers (id, animal_id, type, value) VALUES (?, ?, ?, ?)`,
+            `INSERT OR REPLACE INTO animal_identifiers (id, animal_id, type, value) VALUES (?, ?, ?, ?)`,
             [`${a.id}_PRIMARY`, a.id, 'COW_NUMBER', a.id]
           );
         }
       } else if (preview.module === 'MILK') {
         for (const m of preview.validRows) {
           this.db.run(
-            `INSERT INTO milk_total_entries (
+            `INSERT OR REPLACE INTO milk_total_entries (
               id, date, shift, total_litres, fat_percent, snf_percent,
               mode, locked, notes, created_at, updated_at
             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
@@ -327,7 +328,7 @@ export class CsvDataService {
       } else if (preview.module === 'CUSTOMERS') {
         for (const c of preview.validRows) {
           this.db.run(
-            `INSERT INTO customers (
+            `INSERT OR REPLACE INTO customers (
               id, name, company, phone, address, default_rate_per_l,
               payment_terms_days, status, notes, created_at
             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,

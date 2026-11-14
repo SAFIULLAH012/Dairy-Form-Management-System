@@ -1,11 +1,13 @@
 import { Animal, AnimalRecordStatus, StatusHistory } from '../types.ts';
-import { IAnimalRepository, IAuditRepository } from '../repositories.ts';
+import { IAnimalRepository, IAuditRepository, IReminderRepository, IHealthRepository } from '../repositories.ts';
 import { calculateAge } from '../calculations.ts';
 
 export class AnimalService {
   constructor(
     private animalRepo: IAnimalRepository,
-    private auditRepo: IAuditRepository
+    private auditRepo: IAuditRepository,
+    private reminderRepo?: IReminderRepository,
+    private healthRepo?: IHealthRepository
   ) {}
 
   async getAnimal(idOrIdentifier: string): Promise<(Animal & { calculatedAge: string }) | null> {
@@ -184,10 +186,12 @@ export class AnimalService {
     notes?: string,
     user: string = 'Operator'
   ) {
-    return this.updateAnimal(
+    const updated = await this.updateAnimal(
       id,
       {
         status: 'Sold',
+        milkStatus: 'Not Milking',
+        reproStatus: 'N/A',
         saleDate,
         buyer,
         salePrice,
@@ -196,13 +200,30 @@ export class AnimalService {
       `Animal sold to ${buyer} for ${salePrice}`,
       user
     );
+
+    // Cancel pending reminders for this animal (Issue #17)
+    if (this.reminderRepo) {
+      try {
+        const tasks = await this.reminderRepo.listTasks();
+        const animalTasks = tasks.filter(t => t.linkedRecordId === id && t.status !== 'Completed' && t.status !== 'Cancelled');
+        for (const t of animalTasks) {
+          await this.reminderRepo.saveTask({ ...t, status: 'Cancelled' });
+        }
+      } catch (err) {
+        console.warn('Could not cancel reminders on animal sale:', err);
+      }
+    }
+
+    return updated;
   }
 
   async markDeceased(id: string, deathDate: string, deathReason: string, notes?: string, user: string = 'Operator') {
-    return this.updateAnimal(
+    const updated = await this.updateAnimal(
       id,
       {
         status: 'Deceased',
+        milkStatus: 'Not Milking',
+        reproStatus: 'N/A',
         deathDate,
         deathReason,
         notes: notes ? `${notes} (Deceased on ${deathDate})` : deathReason,
@@ -210,6 +231,40 @@ export class AnimalService {
       `Animal deceased: ${deathReason}`,
       user
     );
+
+    // Close any open health cases for this animal (Issue #16)
+    if (this.healthRepo) {
+      try {
+        const cases = await this.healthRepo.listCases({ animalId: id });
+        const openCases = cases.filter(c => c.status !== 'Closed' && c.status !== 'Recovered');
+        for (const c of openCases) {
+          await this.healthRepo.updateCase({
+            ...c,
+            status: 'Closed',
+            notes: c.notes ? `${c.notes} (Closed: Animal deceased)` : 'Closed: Animal deceased',
+            recoveryDate: deathDate,
+            updatedAt: new Date().toISOString(),
+          });
+        }
+      } catch (err) {
+        console.warn('Could not close health cases on animal death:', err);
+      }
+    }
+
+    // Cancel pending reminders for this animal (Issue #17)
+    if (this.reminderRepo) {
+      try {
+        const tasks = await this.reminderRepo.listTasks();
+        const animalTasks = tasks.filter(t => t.linkedRecordId === id && t.status !== 'Completed' && t.status !== 'Cancelled');
+        for (const t of animalTasks) {
+          await this.reminderRepo.saveTask({ ...t, status: 'Cancelled' });
+        }
+      } catch (err) {
+        console.warn('Could not cancel reminders on animal death:', err);
+      }
+    }
+
+    return updated;
   }
 
   async bulkUpdateGroup(animalIds: string[], newGroup: string, reason?: string, user: string = 'Operator') {

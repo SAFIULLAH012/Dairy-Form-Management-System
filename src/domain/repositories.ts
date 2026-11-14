@@ -37,7 +37,7 @@ export interface IAnimalRepository {
   create(animal: Animal): Promise<Animal>;
   update(animal: Animal): Promise<Animal>;
   addStatusHistory(history: StatusHistory): Promise<void>;
-  getStatusHistory(animalId: string): Promise<StatusHistory[]>;
+  getStatusHistory(animalId?: string): Promise<StatusHistory[]>;
   addIdentifier(identifier: AnimalIdentifier): Promise<void>;
   getIdentifiers(animalId: string): Promise<AnimalIdentifier[]>;
 }
@@ -46,7 +46,7 @@ export interface IMilkRepository {
   findTotalEntry(date: string, shift: string): Promise<MilkTotalEntry | null>;
   listTotalEntries(fromDate?: string, toDate?: string): Promise<MilkTotalEntry[]>;
   saveTotalEntry(entry: MilkTotalEntry): Promise<MilkTotalEntry>;
-  listIndividualEntries(date: string, shift: string): Promise<MilkIndividualEntry[]>;
+  listIndividualEntries(date?: string, shift?: string): Promise<MilkIndividualEntry[]>;
   saveIndividualEntries(date: string, shift: string, entries: MilkIndividualEntry[]): Promise<void>;
   listAnimalMilkHistory(animalId: string, limit?: number): Promise<MilkIndividualEntry[]>;
   getShifts(): Promise<MilkShiftConfig[]>;
@@ -90,7 +90,7 @@ export interface IBreedingRepository {
 }
 
 export interface IGrowthRepository {
-  listByAnimal(animalId: string): Promise<GrowthMeasurement[]>;
+  listByAnimal(animalId?: string): Promise<GrowthMeasurement[]>;
   createMeasurement(measurement: GrowthMeasurement): Promise<GrowthMeasurement>;
 }
 

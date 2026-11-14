@@ -33,9 +33,14 @@ export function createSalesRoutes(container: AppContainer): Router {
   // Deliveries & Invoices
   router.get('/deliveries', async (req: Request, res: Response) => {
     try {
-      const fromDate = req.query.fromDate as string | undefined;
-      const toDate = req.query.toDate as string | undefined;
-      const customerId = req.query.customerId as string | undefined;
+      const rawFrom = req.query.fromDate as string | undefined;
+      const rawTo = req.query.toDate as string | undefined;
+      const rawCustomer = req.query.customerId as string | undefined;
+
+      const fromDate = rawFrom && rawFrom !== 'undefined' && rawFrom !== 'null' ? rawFrom : undefined;
+      const toDate = rawTo && rawTo !== 'undefined' && rawTo !== 'null' ? rawTo : undefined;
+      const customerId = rawCustomer && rawCustomer !== 'undefined' && rawCustomer !== 'null' ? rawCustomer : undefined;
+
       const list = await deliveryRepo.listInvoices({ fromDate, toDate, customerId });
       res.json(list);
     } catch (err: any) {

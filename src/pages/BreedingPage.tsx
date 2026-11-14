@@ -76,6 +76,11 @@ export const BreedingPage: React.FC = () => {
   });
 
   const handleSaveEvent = async () => {
+    const today = new Date().toISOString().slice(0, 10);
+    if (eventForm.date > today) {
+      alert('Breeding event date cannot be in the future.');
+      return;
+    }
     try {
       await api.recordBreedingEvent(eventForm);
       setShowEventModal(false);

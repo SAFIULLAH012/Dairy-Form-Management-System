@@ -3,10 +3,14 @@ import { api } from '../api/api.ts';
 import { BarChart3, Calendar, Printer, Download, TrendingUp, AlertCircle } from 'lucide-react';
 
 export const ReportsPage: React.FC = () => {
-  const [fromDate, setFromDate] = useState(
-    new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().slice(0, 10)
-  );
-  const [toDate, setToDate] = useState(new Date().toISOString().slice(0, 10));
+  const [fromDate, setFromDate] = useState(() => {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-01`;
+  });
+  const [toDate, setToDate] = useState(() => {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  });
   const [report, setReport] = useState<any | null>(null);
   const [herdStats, setHerdStats] = useState<any | null>(null);
   const [loading, setLoading] = useState(true);
@@ -48,14 +52,23 @@ export const ReportsPage: React.FC = () => {
       ['Net Margin (Profit / Loss) (Rs.)', report.kpis.netProfitOrLoss],
     ];
 
-    const csvContent = 'data:text/csv;charset=utf-8,' + lines.map(e => e.join(',')).join('\n');
-    const encodedUri = encodeURI(csvContent);
+    const escapeCsv = (val: any) => {
+      const s = String(val ?? '');
+      if (s.includes(',') || s.includes('"') || s.includes('\n')) {
+        return `"${s.replace(/"/g, '""')}"`;
+      }
+      return s;
+    };
+    const csvContent = '\uFEFF' + lines.map(row => row.map(escapeCsv).join(',')).join('\r\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
-    link.setAttribute('href', encodedUri);
+    link.setAttribute('href', url);
     link.setAttribute('download', `dairy_report_${fromDate}_to_${toDate}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+    URL.revokeObjectURL(url);
   };
 
   return (

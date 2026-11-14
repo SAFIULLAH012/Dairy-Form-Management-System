@@ -97,7 +97,12 @@ export class LocalAppService {
     this.attachmentRepo = new SQLiteAttachmentRepository(this.db);
 
     // Wire up pure domain services
-    this.animalService = new AnimalService(this.animalRepo, this.auditRepo);
+    this.animalService = new AnimalService(
+      this.animalRepo,
+      this.auditRepo,
+      this.reminderRepo,
+      this.healthRepo
+    );
     this.milkService = new MilkCalculationService(
       this.milkRepo,
       this.animalRepo,
@@ -147,7 +152,8 @@ export class LocalAppService {
       this.deliveryRepo,
       this.paymentRepo,
       this.expenseRepo,
-      this.animalRepo
+      this.animalRepo,
+      this.workerRepo
     );
     this.auditBackupService = new AuditBackupService(
       this.animalRepo,

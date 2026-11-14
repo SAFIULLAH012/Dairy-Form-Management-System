@@ -85,14 +85,17 @@ export const FeedPage: React.FC = () => {
 
   const handleSaveFeed = async () => {
     if (!feedForm.feedType.trim()) { alert('Please select or enter a Feed Type.'); return; }
-    if (!feedForm.maund || parseFloat(feedForm.maund) <= 0) { alert('Please enter a valid quantity in Maund.'); return; }
+    const maundNum = parseFloat(feedForm.maund);
+    if (isNaN(maundNum) || maundNum <= 0) { alert('Please enter a valid positive quantity in Maund.'); return; }
+    const priceNum = parseFloat(feedForm.pricePerKg || '0');
+    if (isNaN(priceNum) || priceNum < 0) { alert('Price per KG must be 0 or greater.'); return; }
     try {
       await api.recordFeed({
         date: feedForm.date,
         group: feedForm.group,
         feedType: feedForm.feedType,
-        maund: parseFloat(feedForm.maund),
-        pricePerKg: parseFloat(feedForm.pricePerKg || '0'),
+        maund: maundNum,
+        pricePerKg: priceNum,
         supplier: feedForm.supplier,
         notes: feedForm.notes,
       });

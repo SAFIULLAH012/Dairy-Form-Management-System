@@ -49,7 +49,7 @@ export class SalesInvoiceService {
     const dueDate = addDays(params.date, params.paymentTermsDays);
     const balanceCalc = calculateInvoiceBalance(totalAmount, paidAmount, dueDate);
 
-    const invoiceNumber = `INV-${Date.now().toString().slice(-6)}`;
+    const invoiceNumber = `INV-${Date.now()}-${Math.floor(1000 + Math.random() * 9000)}`;
     const now = new Date().toISOString();
 
     const invoice: DeliveryInvoice = {
@@ -129,13 +129,16 @@ export class SalesInvoiceService {
     const invoice = await this.deliveryRepo.findById(params.invoiceId);
     if (!invoice) throw new Error(`Invoice ${params.invoiceId} not found.`);
 
-    if (params.amount <= 0) {
+    const roundedPayment = Math.round(Number(params.amount) * 100) / 100;
+    const roundedBalance = Math.round(Number(invoice.remainingBalance) * 100) / 100;
+
+    if (roundedPayment <= 0) {
       throw new Error('Payment amount must be greater than zero.');
     }
 
-    if (params.amount > invoice.remainingBalance + 0.01) {
+    if (roundedPayment > roundedBalance) {
       throw new Error(
-        `Payment amount (${params.amount}) exceeds remaining balance (${invoice.remainingBalance}).`
+        `Payment amount (${roundedPayment}) exceeds remaining balance (${roundedBalance}).`
       );
     }
 

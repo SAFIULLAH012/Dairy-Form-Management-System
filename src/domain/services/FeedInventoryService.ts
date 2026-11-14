@@ -54,14 +54,21 @@ export class FeedInventoryService {
     // Automatically deduct from Inventory if item exists with matching name
     const invItem = await this.inventoryRepo.findItemByName(params.feedType);
     if (invItem) {
+      let qtyToDeduct = kg;
+      const unitUpper = (invItem.unit || '').toUpperCase();
+      if (unitUpper === 'MAUND') {
+        qtyToDeduct = Number(params.maund);
+      } else if (unitUpper === 'KG') {
+        qtyToDeduct = kg;
+      }
       await this.recordStockMovement({
         itemId: invItem.id,
         date: params.date,
         type: 'STOCK_OUT',
-        quantity: kg,
+        quantity: qtyToDeduct,
         unitCost: params.pricePerKg,
         reference: tx.id,
-        notes: `Feed consumption for group ${params.group}`,
+        notes: `Feed consumption for group ${params.group} (${params.maund} Maund = ${kg} KG)`,
         user: params.user,
       });
     }
@@ -140,6 +147,16 @@ export class FeedInventoryService {
         autoKey: `LOW_STOCK_${updatedItem.id}`,
         createdAt: now,
       });
+    } else {
+      // Auto-complete low stock task if stock was replenished (Issue #24)
+      try {
+        const existingTask = await this.reminderRepo.findTaskByAutoKey(`LOW_STOCK_${updatedItem.id}`);
+        if (existingTask && existingTask.status !== 'Completed') {
+          await this.reminderRepo.completeTask(existingTask.id);
+        }
+      } catch (err) {
+        console.warn('Could not complete low stock reminder:', err);
+      }
     }
 
     return savedTx;

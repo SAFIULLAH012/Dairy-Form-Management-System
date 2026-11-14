@@ -34,6 +34,7 @@ export class SQLiteDatabase implements IDatabaseAdapter {
       this.db = new SQL.Database();
     }
 
+    this.db.run('PRAGMA foreign_keys = ON;');
     this.runMigrations();
     this.save();
   }

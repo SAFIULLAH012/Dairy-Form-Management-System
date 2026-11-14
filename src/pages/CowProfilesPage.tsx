@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { api } from '../api/api.ts';
+import { calculateAge } from '../domain/calculations.ts';
 import {
   Search,
   X,
@@ -48,14 +49,9 @@ const MilkSparkline: React.FC<{ data: number[]; color?: string }> = ({ data, col
 };
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
-function calcAge(dob: string): string {
+function getFormattedAge(dob: string): string {
   if (!dob) return '–';
-  const diff = Date.now() - new Date(dob).getTime();
-  const days = Math.floor(diff / 86400000);
-  if (days < 30) return `${days}d`;
-  const months = Math.floor(days / 30);
-  if (months < 24) return `${months} mo`;
-  return `${Math.floor(months / 12)}y ${months % 12}mo`;
+  return calculateAge(dob).display;
 }
 
 function statusColor(status: string) {
@@ -126,7 +122,7 @@ const CowCard: React.FC<{ animal: any; onClick: () => void }> = ({ animal, onCli
         </div>
 
         <div className="flex justify-between text-[10px] text-stone-500 pt-1 border-t border-stone-100">
-          <span>🎂 {calcAge(animal.dob)}</span>
+          <span>🎂 {getFormattedAge(animal.dob)}</span>
           <span className="text-emerald-700 font-bold">{animal.group || '–'}</span>
         </div>
       </div>
@@ -200,7 +196,7 @@ const CowProfilePanel: React.FC<{ animal: any; onClose: () => void }> = ({ anima
             {/* Key stats */}
             <div className="grid grid-cols-3 gap-3">
               {[
-                { label: 'Age', value: calcAge(animal.dob), icon: Calendar, color: 'text-amber-600' },
+                { label: 'Age', value: getFormattedAge(animal.dob), icon: Calendar, color: 'text-amber-600' },
                 { label: 'Group', value: animal.group || '–', icon: Activity, color: 'text-emerald-700' },
                 { label: 'Stage', value: animal.stage || '–', icon: Tag, color: 'text-blue-600' },
               ].map(s => (

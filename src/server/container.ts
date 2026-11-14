@@ -119,7 +119,7 @@ export class AppContainer {
     };
 
     // Domain Services initialization
-    const animalService = new AnimalService(animalRepo, auditRepo);
+    const animalService = new AnimalService(animalRepo, auditRepo, reminderRepo, healthRepo);
     const milkService = new MilkCalculationService(milkRepo, animalRepo, healthRepo, reminderRepo, auditRepo);
     const feedInventoryService = new FeedInventoryService(feedRepo, inventoryRepo, reminderRepo, auditRepo);
     const healthBreedingService = new HealthBreedingService(
@@ -158,7 +158,8 @@ export class AppContainer {
       deliveryRepo,
       paymentRepo,
       expenseRepo,
-      animalRepo
+      animalRepo,
+      workerRepo
     );
     const auditBackupService = new AuditBackupService(
       animalRepo,

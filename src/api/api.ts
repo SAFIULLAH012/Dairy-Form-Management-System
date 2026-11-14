@@ -647,6 +647,17 @@ export const api = {
     }
   },
 
+  async restoreBackup(payload: any) {
+    try {
+      return await fetchJson<any>('/api/backup/restore', {
+        method: 'POST',
+        body: JSON.stringify(payload),
+      });
+    } catch {
+      return getLocalApp().restoreBackup(payload);
+    }
+  },
+
   // --- CSV IMPORT / EXPORT ---
   async previewCsv(module: 'ANIMALS' | 'MILK' | 'CUSTOMERS', text: string) {
     try {

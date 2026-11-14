@@ -48,7 +48,8 @@ export const ExpensesPage: React.FC = () => {
   }, [categoryFilter]);
 
   const handleSaveExpense = async () => {
-    if (!formData.amount || parseFloat(formData.amount) <= 0) {
+    const amt = parseFloat(formData.amount);
+    if (isNaN(amt) || amt <= 0) {
       alert('Valid expense amount is required.');
       return;
     }
@@ -56,7 +57,7 @@ export const ExpensesPage: React.FC = () => {
     try {
       await api.recordExpense({
         ...formData,
-        amount: parseFloat(formData.amount),
+        amount: amt,
       });
 
       setShowAddModal(false);

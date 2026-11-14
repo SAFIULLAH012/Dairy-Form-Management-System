@@ -111,13 +111,16 @@ export const SettingsPage: React.FC = () => {
     if (!confirmed) return;
 
     try {
-      // In this version, we can reload or apply
-      alert('Backup verified and acknowledged.');
+      setLoading(true);
+      const res = await api.restoreBackup(restorePayload);
+      alert(`Backup restored successfully!\nRestored: ${JSON.stringify(res.restoredCounts || {}, null, 2)}`);
       setRestorePreview(null);
       setRestorePayload(null);
-      loadAll();
+      await loadAll();
     } catch (err: any) {
       alert(err.message || 'Error executing restore');
+    } finally {
+      setLoading(false);
     }
   };
 

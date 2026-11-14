@@ -9,7 +9,8 @@ export function createBreedingRoutes(container: AppContainer): Router {
   // Breeding & Calving
   router.get('/breeding/records', async (req: Request, res: Response) => {
     try {
-      const animalId = req.query.animalId as string | undefined;
+      const rawId = req.query.animalId as string | undefined;
+      const animalId = rawId && rawId !== 'undefined' && rawId !== 'null' ? rawId : undefined;
       const records = await breedingRepo.listRecords(animalId);
       res.json(records);
     } catch (err: any) {

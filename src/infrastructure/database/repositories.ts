@@ -118,7 +118,7 @@ export class SQLiteAnimalRepository implements IAnimalRepository {
 
   async create(a: Animal): Promise<Animal> {
     this.db.run(
-      `INSERT INTO animals (
+      `INSERT OR REPLACE INTO animals (
         id, cow_number, tag1, tag2, sex, dob, breed, group_name, stage, repro_status,
         milk_status, status, purchase_date, purchase_price, supplier, notes, photo_url,
         dam_id, sire_id, birth_weight, weaning_date, sale_date, sale_price, buyer,
@@ -202,14 +202,18 @@ export class SQLiteAnimalRepository implements IAnimalRepository {
 
   async addStatusHistory(h: StatusHistory): Promise<void> {
     this.db.run(
-      `INSERT INTO status_history (id, animal_id, change_type, old_value, new_value, date, reason, user_name, created_at)
+      `INSERT OR REPLACE INTO status_history (id, animal_id, change_type, old_value, new_value, date, reason, user_name, created_at)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [h.id, h.animalId, h.changeType, h.oldValue, h.newValue, h.date, h.reason, h.user, h.createdAt]
     );
   }
 
-  async getStatusHistory(animalId: string): Promise<StatusHistory[]> {
-    const rows = this.db.all('SELECT * FROM status_history WHERE animal_id = ? ORDER BY created_at DESC', [animalId]);
+  async getStatusHistory(animalId?: string): Promise<StatusHistory[]> {
+    const sql = animalId
+      ? 'SELECT * FROM status_history WHERE animal_id = ? ORDER BY created_at DESC'
+      : 'SELECT * FROM status_history ORDER BY created_at DESC';
+    const params = animalId ? [animalId] : [];
+    const rows = this.db.all(sql, params);
     return rows.map(r => ({
       id: r.id,
       animalId: r.animal_id,
@@ -312,11 +316,18 @@ export class SQLiteMilkRepository implements IMilkRepository {
     return entry;
   }
 
-  async listIndividualEntries(date: string, shift: string): Promise<MilkIndividualEntry[]> {
-    const rows = this.db.all('SELECT * FROM milk_individual_entries WHERE date = ? AND shift = ? ORDER BY animal_id ASC', [
-      date,
-      shift,
-    ]);
+  async listIndividualEntries(date?: string, shift?: string): Promise<MilkIndividualEntry[]> {
+    let sql = 'SELECT * FROM milk_individual_entries';
+    const params: any[] = [];
+    if (date && shift) {
+      sql += ' WHERE date = ? AND shift = ?';
+      params.push(date, shift);
+    } else if (date) {
+      sql += ' WHERE date = ?';
+      params.push(date);
+    }
+    sql += ' ORDER BY date DESC, shift DESC, animal_id ASC';
+    const rows = this.db.all(sql, params);
     return rows.map(r => ({
       id: r.id,
       date: r.date,
@@ -336,7 +347,7 @@ export class SQLiteMilkRepository implements IMilkRepository {
     this.db.run('DELETE FROM milk_individual_entries WHERE date = ? AND shift = ?', [date, shift]);
     for (const e of entries) {
       this.db.run(
-        `INSERT INTO milk_individual_entries (
+        `INSERT OR REPLACE INTO milk_individual_entries (
           id, date, shift, animal_id, litres, fat_percent, snf_percent, reason, notes, created_at, updated_at
         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
@@ -491,7 +502,7 @@ export class SQLiteFeedRepository implements IFeedRepository {
 
   async createTransaction(tx: FeedTransaction): Promise<FeedTransaction> {
     this.db.run(
-      `INSERT INTO feed_transactions (id, date, group_name, feed_type, maund, kg, price_per_kg, total_cost, supplier, notes, cow_count, created_at)
+      `INSERT OR REPLACE INTO feed_transactions (id, date, group_name, feed_type, maund, kg, price_per_kg, total_cost, supplier, notes, cow_count, created_at)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         tx.id,
@@ -707,7 +718,7 @@ export class SQLiteHealthRepository implements IHealthRepository {
 
   async createCase(c: HealthCase): Promise<HealthCase> {
     this.db.run(
-      `INSERT INTO health_cases (
+      `INSERT OR REPLACE INTO health_cases (
         id, animal_id, date, problem, symptoms, diagnosis, medicine, dose, injection,
         provider, cost, status, follow_up_date, recovery_date, notes, source, created_at, updated_at
       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
@@ -800,7 +811,7 @@ export class SQLiteVaccinationRepository implements IVaccinationRepository {
 
   async createRecord(v: VaccinationRecord): Promise<VaccinationRecord> {
     this.db.run(
-      `INSERT INTO vaccination_records (
+      `INSERT OR REPLACE INTO vaccination_records (
         id, animal_id, vaccine_type, last_date, next_due_date, product, dose, provider, cost, status, notes, created_at
       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
@@ -864,7 +875,7 @@ export class SQLiteBreedingRepository implements IBreedingRepository {
 
   async createRecord(b: BreedingRecord): Promise<BreedingRecord> {
     this.db.run(
-      `INSERT INTO breeding_records (
+      `INSERT OR REPLACE INTO breeding_records (
         id, animal_id, date, event, sire_breed_or_id, inseminator_name,
         expected_calving_date, recommended_dry_off_date, expected_next_heat_date,
         actual_calving_date, follow_up_date, status, notes, created_at
@@ -918,8 +929,12 @@ export class SQLiteBreedingRepository implements IBreedingRepository {
 export class SQLiteGrowthRepository implements IGrowthRepository {
   constructor(private db: IDatabaseAdapter) {}
 
-  async listByAnimal(animalId: string): Promise<GrowthMeasurement[]> {
-    const rows = this.db.all('SELECT * FROM growth_measurements WHERE animal_id = ? ORDER BY date ASC', [animalId]);
+  async listByAnimal(animalId?: string): Promise<GrowthMeasurement[]> {
+    const sql = animalId
+      ? 'SELECT * FROM growth_measurements WHERE animal_id = ? ORDER BY date ASC'
+      : 'SELECT * FROM growth_measurements ORDER BY date ASC';
+    const params = animalId ? [animalId] : [];
+    const rows = this.db.all(sql, params);
     return rows.map(r => ({
       id: r.id,
       animalId: r.animal_id,
@@ -934,7 +949,7 @@ export class SQLiteGrowthRepository implements IGrowthRepository {
 
   async createMeasurement(g: GrowthMeasurement): Promise<GrowthMeasurement> {
     this.db.run(
-      `INSERT INTO growth_measurements (id, animal_id, date, weight_kg, age_days_at_weighing, average_daily_gain, notes, created_at)
+      `INSERT OR REPLACE INTO growth_measurements (id, animal_id, date, weight_kg, age_days_at_weighing, average_daily_gain, notes, created_at)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
       [g.id, g.animalId, g.date, g.weightKg, g.ageDaysAtWeighing, g.averageDailyGain, g.notes, g.createdAt]
     );
@@ -1158,7 +1173,7 @@ export class SQLitePaymentRepository implements IPaymentRepository {
 
   async createPayment(p: PaymentRecord): Promise<PaymentRecord> {
     this.db.run(
-      'INSERT INTO payments (id, invoice_id, customer_id, date, amount, method, reference, notes, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      'INSERT OR REPLACE INTO payments (id, invoice_id, customer_id, date, amount, method, reference, notes, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
       [p.id, p.invoiceId, p.customerId, p.date, p.amount, p.method, p.reference, p.notes, p.createdAt]
     );
     return p;
@@ -1231,7 +1246,7 @@ export class SQLiteWorkerRepository implements IWorkerRepository {
 
   async createTransaction(tx: WorkerTransaction): Promise<WorkerTransaction> {
     this.db.run(
-      'INSERT INTO worker_transactions (id, worker_id, worker_name, date, type, amount, notes, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+      'INSERT OR REPLACE INTO worker_transactions (id, worker_id, worker_name, date, type, amount, notes, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
       [tx.id, tx.workerId, tx.workerName, tx.date, tx.type, tx.amount, tx.notes, tx.createdAt]
     );
     return tx;
@@ -1274,7 +1289,7 @@ export class SQLiteExpenseRepository implements IExpenseRepository {
 
   async createExpense(e: ExpenseRecord): Promise<ExpenseRecord> {
     this.db.run(
-      `INSERT INTO expenses (id, date, category, amount, vendor, payment_method, reference, notes, attachment_id, created_at)
+      `INSERT OR REPLACE INTO expenses (id, date, category, amount, vendor, payment_method, reference, notes, attachment_id, created_at)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [e.id, e.date, e.category, e.amount, e.vendor, e.paymentMethod, e.reference, e.notes, e.attachmentId, e.createdAt]
     );

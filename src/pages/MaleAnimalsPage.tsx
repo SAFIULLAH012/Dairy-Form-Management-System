@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { api } from '../api/api.ts';
 import { Modal } from '../components/Modal.tsx';
-import { Search, Plus, DollarSign, Edit2, Calendar } from 'lucide-react';
+import { Search, Plus, DollarSign, Edit2, Calendar, HeartCrack } from 'lucide-react';
 
 export const MaleAnimalsPage: React.FC = () => {
   const [males, setMales] = useState<any[]>([]);
@@ -13,6 +13,7 @@ export const MaleAnimalsPage: React.FC = () => {
   const [showAddModal, setShowAddModal] = useState(false);
   const [editingAnimal, setEditingAnimal] = useState<any | null>(null);
   const [showSoldModal, setShowSoldModal] = useState<any | null>(null);
+  const [showDeceasedModal, setShowDeceasedModal] = useState<any | null>(null);
 
   const [formData, setFormData] = useState({
     id: '',
@@ -32,6 +33,12 @@ export const MaleAnimalsPage: React.FC = () => {
     saleDate: new Date().toISOString().slice(0, 10),
     buyer: '',
     salePrice: '',
+    notes: '',
+  });
+
+  const [deceasedForm, setDeceasedForm] = useState({
+    deathDate: new Date().toISOString().slice(0, 10),
+    deathReason: '',
     notes: '',
   });
 
@@ -104,7 +111,7 @@ export const MaleAnimalsPage: React.FC = () => {
         stage: 'Male',
         reproStatus: 'N/A',
         milkStatus: 'N/A',
-        purchasePrice: formData.purchasePrice ? parseFloat(formData.purchasePrice) : undefined,
+        purchasePrice: formData.purchasePrice && !isNaN(parseFloat(formData.purchasePrice)) ? Math.max(0, parseFloat(formData.purchasePrice)) : undefined,
       };
 
       if (editingAnimal) {
@@ -134,6 +141,25 @@ export const MaleAnimalsPage: React.FC = () => {
         notes: soldForm.notes,
       });
       setShowSoldModal(null);
+      loadMales();
+    } catch (err: any) {
+      alert(err.message);
+    }
+  };
+
+  const handleMarkDeceased = async () => {
+    if (!showDeceasedModal) return;
+    if (!deceasedForm.deathReason.trim()) {
+      alert('Reason of death is required.');
+      return;
+    }
+    try {
+      await api.markDeceased(showDeceasedModal.id, {
+        deathDate: deceasedForm.deathDate,
+        deathReason: deceasedForm.deathReason,
+        notes: deceasedForm.notes,
+      });
+      setShowDeceasedModal(null);
       loadMales();
     } catch (err: any) {
       alert(err.message);
@@ -257,21 +283,37 @@ export const MaleAnimalsPage: React.FC = () => {
                           <Edit2 className="w-4 h-4" />
                         </button>
                         {m.status === 'Active' && (
-                          <button
-                            onClick={() => {
-                              setShowSoldModal(m);
-                              setSoldForm({
-                                saleDate: new Date().toISOString().slice(0, 10),
-                                buyer: '',
-                                salePrice: '',
-                                notes: '',
-                              });
-                            }}
-                            className="p-1 text-blue-600 hover:bg-blue-50 rounded cursor-pointer"
-                            title="Mark Sold"
-                          >
-                            <DollarSign className="w-4 h-4" />
-                          </button>
+                          <>
+                            <button
+                              onClick={() => {
+                                setShowSoldModal(m);
+                                setSoldForm({
+                                  saleDate: new Date().toISOString().slice(0, 10),
+                                  buyer: '',
+                                  salePrice: '',
+                                  notes: '',
+                                });
+                              }}
+                              className="p-1 text-blue-600 hover:bg-blue-50 rounded cursor-pointer"
+                              title="Mark Sold"
+                            >
+                              <DollarSign className="w-4 h-4" />
+                            </button>
+                            <button
+                              onClick={() => {
+                                setShowDeceasedModal(m);
+                                setDeceasedForm({
+                                  deathDate: new Date().toISOString().slice(0, 10),
+                                  deathReason: '',
+                                  notes: '',
+                                });
+                              }}
+                              className="p-1 text-rose-600 hover:bg-rose-50 rounded cursor-pointer"
+                              title="Mark Deceased"
+                            >
+                              <HeartCrack className="w-4 h-4" />
+                            </button>
+                          </>
                         )}
                       </div>
                     </td>
@@ -424,6 +466,61 @@ export const MaleAnimalsPage: React.FC = () => {
               type="number"
               value={soldForm.salePrice}
               onChange={e => setSoldForm({ ...soldForm, salePrice: e.target.value })}
+              className="w-full px-3 py-1.5 border border-stone-200 rounded-lg"
+            />
+          </div>
+        </div>
+      </Modal>
+
+      {/* Mark Deceased Modal */}
+      <Modal
+        title={`Record Deceased Male: ${showDeceasedModal?.id || ''}`}
+        isOpen={Boolean(showDeceasedModal)}
+        onClose={() => setShowDeceasedModal(null)}
+        footer={
+          <>
+            <button
+              onClick={() => setShowDeceasedModal(null)}
+              className="px-3 py-1.5 text-xs font-semibold text-stone-600 hover:bg-stone-100 rounded-lg"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleMarkDeceased}
+              className="px-3 py-1.5 text-xs font-bold text-white bg-rose-600 hover:bg-rose-700 rounded-lg"
+            >
+              Confirm Deceased
+            </button>
+          </>
+        }
+      >
+        <div className="space-y-3 text-xs">
+          <div>
+            <label className="block text-stone-600 font-semibold mb-1">Death Date *</label>
+            <input
+              type="date"
+              value={deceasedForm.deathDate}
+              onChange={e => setDeceasedForm({ ...deceasedForm, deathDate: e.target.value })}
+              className="w-full px-3 py-1.5 border border-stone-200 rounded-lg"
+            />
+          </div>
+          <div>
+            <label className="block text-stone-600 font-semibold mb-1">Reason of Death *</label>
+            <input
+              type="text"
+              placeholder="e.g. Bloat, Respiratory infection, Accident"
+              value={deceasedForm.deathReason}
+              onChange={e => setDeceasedForm({ ...deceasedForm, deathReason: e.target.value })}
+              className="w-full px-3 py-1.5 border border-stone-200 rounded-lg"
+            />
+          </div>
+          <div>
+            <label className="block text-stone-600 font-semibold mb-1">Notes (Optional)</label>
+            <textarea
+              rows={2}
+              placeholder="Any autopsy or veterinary observation..."
+              value={deceasedForm.notes}
+              onChange={e => setDeceasedForm({ ...deceasedForm, notes: e.target.value })}
               className="w-full px-3 py-1.5 border border-stone-200 rounded-lg"
             />
           </div>

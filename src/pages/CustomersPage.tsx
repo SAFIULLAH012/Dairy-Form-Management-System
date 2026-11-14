@@ -42,12 +42,24 @@ export const CustomersPage: React.FC = () => {
       alert('Customer name is required.');
       return;
     }
+    const rate = parseFloat(formData.defaultRatePerL || '210');
+    if (isNaN(rate) || rate <= 0) {
+      alert('Default milk rate must be greater than zero.');
+      return;
+    }
+    const terms = parseInt(formData.paymentTermsDays || '7', 10);
+    if (isNaN(terms) || terms < 0) {
+      alert('Payment terms must be 0 or more days.');
+      return;
+    }
 
     try {
       await api.createCustomer({
         ...formData,
-        defaultRatePerL: parseFloat(formData.defaultRatePerL || '210'),
-        paymentTermsDays: parseInt(formData.paymentTermsDays || '7', 10),
+        name: formData.name.trim(),
+        phone: formData.phone.trim(),
+        defaultRatePerL: rate,
+        paymentTermsDays: terms,
         status: 'Active',
       });
 
