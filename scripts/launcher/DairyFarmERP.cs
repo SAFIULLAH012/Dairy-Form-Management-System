@@ -190,22 +190,22 @@ namespace DairyFarmERP
         {
             try
             {
-                string edgePath = FindEdgeExecutable();
+                string browserPath = FindBrowserExecutable();
                 string userDataDir = Path.Combine(
                     Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-                    "DairyFarmERP",
+                    "BAFarm",
                     "AppProfile"
                 );
 
-                if (!string.IsNullOrEmpty(edgePath))
+                if (!string.IsNullOrEmpty(browserPath))
                 {
-                    ProcessStartInfo edgePsi = new ProcessStartInfo
+                    ProcessStartInfo psi = new ProcessStartInfo
                     {
-                        FileName = edgePath,
-                        Arguments = "--app=" + APP_URL + " --window-size=1366,850 --user-data-dir=\"" + userDataDir + "\" --app-id=DairyFarmERP",
+                        FileName = browserPath,
+                        Arguments = "--app=\"" + APP_URL + "\" --new-window --window-size=1366,850 --user-data-dir=\"" + userDataDir + "\" --app-id=BAFarmERP --no-first-run --no-default-browser-check",
                         UseShellExecute = false
                     };
-                    Process.Start(edgePsi);
+                    Process.Start(psi);
                 }
                 else
                 {
@@ -216,7 +216,7 @@ namespace DairyFarmERP
             {
                 MessageBox.Show(
                     "Could not open application window:\n" + ex.Message,
-                    "Dairy Farm ERP",
+                    "BA Farm",
                     MessageBoxButtons.OK,
                     MessageBoxIcon.Error
                 );
@@ -260,13 +260,19 @@ namespace DairyFarmERP
             return "node.exe";
         }
 
-        private static string FindEdgeExecutable()
+        private static string FindBrowserExecutable()
         {
             string p1 = @"C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe";
             if (File.Exists(p1)) return p1;
 
             string p2 = @"C:\Program Files\Microsoft\Edge\Application\msedge.exe";
             if (File.Exists(p2)) return p2;
+
+            string chrome = @"C:\Program Files\Google\Chrome\Application\chrome.exe";
+            if (File.Exists(chrome)) return chrome;
+
+            string chromeX86 = @"C:\Program Files (x86)\Google\Chrome\Application\chrome.exe";
+            if (File.Exists(chromeX86)) return chromeX86;
 
             return null;
         }

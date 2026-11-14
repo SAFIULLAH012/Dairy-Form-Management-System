@@ -2,6 +2,10 @@
 node_modules/
 
 # Build outputs
+# Application Binaries
+DairyFarmERP.exe
+dist-electron/
+dist-server/
 dist/
 dist-electron/
 
