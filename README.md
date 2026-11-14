@@ -77,18 +77,22 @@
 
 ---
 
-## 🚀 Installation (Client)
+## 🚀 Running the App (Windows)
 
-### Option 1: Single EXE Installer (Recommended)
-1. Download `DairyFarmERP-Setup.exe`
-2. **Double-click** to run
-3. It will install to `C:\DairyFarmERP\`
-4. A **Desktop shortcut** is created automatically
-5. Double-click the shortcut — **Done!** 🎉
+### Option 1: Native Desktop Executable (Recommended)
+1. Simply double-click **`DairyFarmERP.exe`** in the project folder.
+2. The app initializes the offline SQLite database and launches in a dedicated desktop application window!
+3. A system tray icon is automatically added so you can open/manage the app anytime.
 
-### Option 2: Portable Folder
-1. Copy the entire `dist-electron\Dairy Farm ERP-win32-x64\` folder
-2. Double-click `Dairy Farm ERP.exe` inside it
+### Option 2: Quick Desktop Launchers
+- Double-click **`start-windows-app.bat`** or **`start-server.bat`**
+- App runs locally at `http://localhost:3001`
+
+### Option 3: Compile EXE from Source
+```bash
+npm run build:exe
+```
+This compiles `DairyFarmERP.exe` instantly using the built-in Windows C# compiler (`csc.exe`). No extra software or internet download required!
 
 ---
 
