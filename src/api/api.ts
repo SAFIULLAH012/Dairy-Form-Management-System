@@ -636,6 +636,14 @@ export const api = {
     }
   },
 
+  async exportBackup() {
+    try {
+      return await fetchJson<any>('/api/backup/export');
+    } catch {
+      return getLocalApp().generateBackup();
+    }
+  },
+
   async validateBackup(content: any) {
     try {
       return await fetchJson<any>('/api/backup/validate', {

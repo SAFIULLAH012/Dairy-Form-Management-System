@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { api } from '../api/api.ts';
 import { Modal } from './Modal.tsx';
 import { Activity, Beaker, Heart, Calendar, ArrowUpRight, ArrowDownRight } from 'lucide-react';
+import { calculateAge } from '../domain/calculations.ts';
 
 interface AnimalProfileModalProps {
   animalId: string | null;
@@ -46,7 +47,8 @@ export const AnimalProfileModal: React.FC<AnimalProfileModalProps> = ({ animalId
 
   // Process milk data for simple bar chart
   const last14Days = milkHistory.slice(-14);
-  const maxMilk = Math.max(...last14Days.map(m => m.yield || 0), 10); // Minimum scale 10
+  const getYield = (m: any) => Number(m.litres ?? m.yield ?? 0);
+  const maxMilk = Math.max(...last14Days.map(getYield), 10); // Minimum scale 10
 
   return (
     <Modal title={`Cow Profile: ${animal?.id || animalId}`} isOpen={isOpen} onClose={onClose}>
@@ -63,7 +65,9 @@ export const AnimalProfileModal: React.FC<AnimalProfileModalProps> = ({ animalId
             </div>
             <div className="bg-stone-50 p-3 rounded-xl border border-stone-100">
               <div className="text-stone-400 text-[10px] uppercase font-bold tracking-wider mb-1">Age</div>
-              <div className="font-bold text-stone-800">{animal?.calculatedAge || '-'}</div>
+              <div className="font-bold text-stone-800">
+                {animal?.dob ? calculateAge(animal.dob).display : (animal?.calculatedAge || '-')}
+              </div>
             </div>
             <div className="bg-emerald-50 p-3 rounded-xl border border-emerald-100">
               <div className="text-emerald-600 text-[10px] uppercase font-bold tracking-wider mb-1">Milk Status</div>
@@ -85,12 +89,13 @@ export const AnimalProfileModal: React.FC<AnimalProfileModalProps> = ({ animalId
             {last14Days.length > 0 ? (
               <div className="h-32 flex items-end gap-1.5 mt-4">
                 {last14Days.map((m, i) => {
-                  const heightPct = ((m.yield || 0) / maxMilk) * 100;
+                  const yVal = getYield(m);
+                  const heightPct = Math.min(100, Math.max(0, (yVal / maxMilk) * 100));
                   return (
                     <div key={i} className="flex-1 flex flex-col items-center gap-1 group relative">
                       {/* Tooltip */}
                       <div className="opacity-0 group-hover:opacity-100 absolute -top-8 bg-stone-800 text-white text-[10px] px-2 py-1 rounded transition-opacity whitespace-nowrap z-10 pointer-events-none">
-                        {m.date}: {m.yield || 0} L
+                        {m.date}: {yVal.toFixed(1)} L
                       </div>
                       <div 
                         className="w-full bg-emerald-100 rounded-t-sm relative overflow-hidden group-hover:bg-emerald-200 transition-colors"
@@ -121,10 +126,12 @@ export const AnimalProfileModal: React.FC<AnimalProfileModalProps> = ({ animalId
                 {healthCases.length > 0 ? healthCases.map((hc, i) => (
                   <div key={i} className="bg-stone-50 p-2.5 rounded-lg border border-stone-100 text-xs">
                     <div className="flex justify-between font-bold text-stone-700 mb-1">
-                      <span>{hc.diagnosis}</span>
+                      <span>{hc.diagnosis || hc.problem || 'Medical Case'}</span>
                       <span className="text-stone-400">{hc.date}</span>
                     </div>
-                    <div className="text-stone-500 text-[11px] truncate">{hc.treatment || 'No treatment details'}</div>
+                    <div className="text-stone-500 text-[11px] truncate">
+                      {hc.medicine ? `${hc.medicine}${hc.dose ? ` (${hc.dose})` : ''}` : (hc.treatment || hc.notes || 'No treatment details')}
+                    </div>
                   </div>
                 )) : (
                   <div className="text-xs text-stone-400">No medical issues recorded.</div>
@@ -142,11 +149,12 @@ export const AnimalProfileModal: React.FC<AnimalProfileModalProps> = ({ animalId
                 {breedingRecords.length > 0 ? breedingRecords.map((br, i) => (
                   <div key={i} className="bg-stone-50 p-2.5 rounded-lg border border-stone-100 text-xs">
                     <div className="flex justify-between font-bold text-stone-700 mb-1">
-                      <span>{br.type}</span>
+                      <span>{br.event || br.type || 'Breeding Event'}</span>
                       <span className="text-stone-400">{br.date}</span>
                     </div>
                     <div className="text-stone-500 text-[11px]">
-                      {br.isSuccessful ? 'Successful' : (br.isSuccessful === false ? 'Failed' : 'Pending Check')}
+                      {br.status === 'Completed' || br.isSuccessful ? 'Successful' : (br.status === 'Failed' || br.isSuccessful === false ? 'Failed' : (br.status || 'Pending Check'))}
+                      {br.sireBreedOrId ? ` · Sire: ${br.sireBreedOrId}` : ''}
                     </div>
                   </div>
                 )) : (

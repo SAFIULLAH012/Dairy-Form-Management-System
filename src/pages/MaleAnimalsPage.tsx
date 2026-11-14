@@ -5,9 +5,11 @@ import { Search, Plus, DollarSign, Edit2, Calendar, HeartCrack } from 'lucide-re
 
 export const MaleAnimalsPage: React.FC = () => {
   const [males, setMales] = useState<any[]>([]);
+  const [groups, setGroups] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('Active');
+  const [groupFilter, setGroupFilter] = useState('');
 
   // Modals
   const [showAddModal, setShowAddModal] = useState(false);
@@ -45,8 +47,12 @@ export const MaleAnimalsPage: React.FC = () => {
   const loadMales = async () => {
     try {
       setLoading(true);
-      const data = await api.getAnimals({ sex: 'Male', status: statusFilter || undefined });
+      const [data, grpList] = await Promise.all([
+        api.getAnimals({ sex: 'Male', status: statusFilter || undefined, group: groupFilter || undefined }),
+        api.getGroups(),
+      ]);
       setMales(data);
+      setGroups(grpList);
     } catch (err) {
       console.error('Error loading male animals:', err);
     } finally {
@@ -56,7 +62,7 @@ export const MaleAnimalsPage: React.FC = () => {
 
   useEffect(() => {
     loadMales();
-  }, [statusFilter]);
+  }, [statusFilter, groupFilter]);
 
   const handleOpenAdd = () => {
     setEditingAnimal(null);
@@ -105,10 +111,15 @@ export const MaleAnimalsPage: React.FC = () => {
     }
 
     try {
+      const dobDate = new Date(formData.dob);
+      const now = new Date();
+      const ageMonths = isNaN(dobDate.getTime()) ? 24 : (now.getFullYear() - dobDate.getFullYear()) * 12 + (now.getMonth() - dobDate.getMonth());
+      const stage = ageMonths < 12 ? 'Calf' : 'Adult';
+
       const payload: any = {
         ...formData,
         sex: 'Male',
-        stage: 'Male',
+        stage,
         reproStatus: 'N/A',
         milkStatus: 'N/A',
         purchasePrice: formData.purchasePrice && !isNaN(parseFloat(formData.purchasePrice)) ? Math.max(0, parseFloat(formData.purchasePrice)) : undefined,
@@ -199,7 +210,18 @@ export const MaleAnimalsPage: React.FC = () => {
             <option value="Active">Active Males</option>
             <option value="Sold">Sold</option>
             <option value="Deceased">Deceased</option>
-            <option value="">All</option>
+            <option value="">All Statuses</option>
+          </select>
+
+          <select
+            value={groupFilter}
+            onChange={e => setGroupFilter(e.target.value)}
+            className="text-xs px-2.5 py-1.5 bg-stone-50 border border-stone-200 rounded-lg text-stone-700 font-medium"
+          >
+            <option value="">All Groups</option>
+            {groups.map(g => (
+              <option key={g} value={g}>{g}</option>
+            ))}
           </select>
         </div>
 

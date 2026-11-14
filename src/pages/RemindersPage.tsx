@@ -8,6 +8,26 @@ interface RemindersPageProps {
   onNavigateToModule: (module: NavItem) => void;
 }
 
+const moduleToTab: Record<string, NavItem> = {
+  health: 'health',
+  vaccine: 'vaccination',
+  vaccination: 'vaccination',
+  milk: 'milk',
+  milking: 'milk',
+  feed: 'feed',
+  inventory: 'inventory',
+  breeding: 'breeding',
+  sales: 'deliveries',
+  delivery: 'deliveries',
+  deliveries: 'deliveries',
+  workers: 'workers',
+  worker: 'workers',
+  expenses: 'expenses',
+  expense: 'expenses',
+  animal: 'animals',
+  animals: 'animals',
+};
+
 export const RemindersPage: React.FC<RemindersPageProps> = ({ onNavigateToModule }) => {
   const [tasks, setTasks] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -139,12 +159,14 @@ export const RemindersPage: React.FC<RemindersPageProps> = ({ onNavigateToModule
                   </td>
                 </tr>
               ) : (
-                tasks.map(t => (
-                  <tr
-                    key={t.id}
-                    onClick={() => onNavigateToModule(t.sourceModule as NavItem)}
-                    className="hover:bg-stone-50/70 transition-colors cursor-pointer"
-                  >
+                tasks.map(t => {
+                  const targetTab = moduleToTab[t.sourceModule?.toLowerCase()] || (t.sourceModule as NavItem);
+                  return (
+                    <tr
+                      key={t.id}
+                      onClick={() => onNavigateToModule(targetTab)}
+                      className="hover:bg-stone-50/70 transition-colors cursor-pointer"
+                    >
                     <td className="p-3 font-medium text-stone-600">
                       {t.dueDate} <span className="text-[10px] text-stone-400 font-mono">({t.dueTime})</span>
                     </td>
@@ -191,7 +213,8 @@ export const RemindersPage: React.FC<RemindersPageProps> = ({ onNavigateToModule
                       </div>
                     </td>
                   </tr>
-                ))
+                  );
+                })
               )}
             </tbody>
           </table>

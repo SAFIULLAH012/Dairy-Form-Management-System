@@ -38,6 +38,7 @@ export const AnimalsPage: React.FC = () => {
   const [formData, setFormData] = useState({
     id: '',
     dob: new Date().toISOString().slice(0, 10),
+    breed: 'Cross',
     originType: 'Farm Born',
     purchasePrice: '',
     supplier: '',
@@ -92,6 +93,7 @@ export const AnimalsPage: React.FC = () => {
     setFormData({
       id: '',
       dob: new Date().toISOString().slice(0, 10),
+      breed: 'Cross',
       originType: 'Farm Born',
       purchasePrice: '',
       supplier: '',
@@ -112,6 +114,7 @@ export const AnimalsPage: React.FC = () => {
     setFormData({
       id: animal.id,
       dob: animal.dob || '',
+      breed: animal.breed || 'Cross',
       originType: animal.purchasePrice ? 'Purchased' : 'Farm Born',
       purchasePrice: animal.purchasePrice ? String(animal.purchasePrice) : '',
       supplier: animal.supplier || '',
@@ -149,12 +152,14 @@ export const AnimalsPage: React.FC = () => {
         tag1: formData.id.trim(),
         sex: 'Female',
         dob: formData.dob || new Date().toISOString().slice(0, 10),
-        breed: 'Unknown',
+        breed: formData.breed?.trim() || 'Cross',
         group: formData.group || (groups[0] || 'High'),
         stage,
         reproStatus,
         milkStatus,
         status: formData.status || 'Active',
+        notes: formData.notes?.trim() || undefined,
+        photoUrl: formData.photoUrl || undefined,
       };
       
       if (formData.originType === 'Purchased') {
@@ -552,18 +557,39 @@ export const AnimalsPage: React.FC = () => {
         }
       >
         <div className="grid grid-cols-1 gap-3.5 text-xs">
-          <div>
-            <label className="block text-stone-600 font-semibold mb-1">
-              Tag Number *
-            </label>
-            <input
-              type="text"
-              placeholder="e.g. TAG-001"
-              value={formData.id}
-              disabled={Boolean(editingAnimal)}
-              onChange={e => setFormData({ ...formData, id: e.target.value })}
-              className="w-full px-3 py-2 border-2 border-stone-300 rounded-lg bg-stone-50 disabled:bg-stone-100 text-sm font-bold focus:border-emerald-500 focus:outline-none"
-            />
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-stone-600 font-semibold mb-1">
+                Tag Number *
+              </label>
+              <input
+                type="text"
+                placeholder="e.g. TAG-001"
+                value={formData.id}
+                disabled={Boolean(editingAnimal)}
+                onChange={e => setFormData({ ...formData, id: e.target.value })}
+                className="w-full px-3 py-2 border-2 border-stone-300 rounded-lg bg-stone-50 disabled:bg-stone-100 text-sm font-bold focus:border-emerald-500 focus:outline-none"
+              />
+            </div>
+
+            <div>
+              <label className="block text-stone-600 font-semibold mb-1">
+                Breed (Nasl) *
+              </label>
+              <select
+                value={formData.breed}
+                onChange={e => setFormData({ ...formData, breed: e.target.value })}
+                className="w-full px-3 py-2 border-2 border-stone-300 rounded-lg bg-white font-semibold text-stone-700 focus:border-emerald-500 focus:outline-none"
+              >
+                <option value="Holstein Friesian">Holstein Friesian</option>
+                <option value="Jersey">Jersey</option>
+                <option value="Sahiwal">Sahiwal</option>
+                <option value="Cross">Cross</option>
+                <option value="Cholistani">Cholistani</option>
+                <option value="Red Sindhi">Red Sindhi</option>
+                <option value="Other">Other</option>
+              </select>
+            </div>
           </div>
 
           <div>
@@ -660,6 +686,40 @@ export const AnimalsPage: React.FC = () => {
               ))}
             </select>
             <p className="mt-1 text-[10px] text-stone-500">Naye groups banane ke liye Settings me jayen.</p>
+          </div>
+
+          <div>
+            <label className="block text-stone-600 font-semibold mb-1">
+              Cow Photo
+            </label>
+            <div className="flex items-center gap-3">
+              {formData.photoUrl && (
+                <img
+                  src={formData.photoUrl}
+                  alt="Cow Preview"
+                  className="w-12 h-12 rounded-lg object-cover border border-stone-200"
+                />
+              )}
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handlePhotoUpload}
+                className="text-xs text-stone-600 file:mr-2 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-stone-200 file:text-stone-700 hover:file:bg-stone-300 cursor-pointer"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-stone-600 font-semibold mb-1">
+              Notes
+            </label>
+            <textarea
+              rows={2}
+              placeholder="Any physical marks, pedigree, or health observations..."
+              value={formData.notes}
+              onChange={e => setFormData({ ...formData, notes: e.target.value })}
+              className="w-full px-3 py-2 border-2 border-stone-300 rounded-lg focus:border-emerald-500 focus:outline-none"
+            />
           </div>
         </div>
       </Modal>

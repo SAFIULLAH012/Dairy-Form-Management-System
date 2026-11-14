@@ -47,7 +47,7 @@ export const FeedPage: React.FC = () => {
 
   const loadCowCount = async (group: string) => {
     try {
-      const cows = await api.getAnimals({ sex: 'Female', status: 'Active', group });
+      const cows = await api.getAnimals({ status: 'Active', group });
       setCowCountInGroup(cows.length);
     } catch {
       setCowCountInGroup(0);
@@ -85,6 +85,8 @@ export const FeedPage: React.FC = () => {
 
   const handleSaveFeed = async () => {
     if (!feedForm.feedType.trim()) { alert('Please select or enter a Feed Type.'); return; }
+    const today = new Date().toISOString().slice(0, 10);
+    if (feedForm.date > today) { alert('Feed date cannot be in the future.'); return; }
     const maundNum = parseFloat(feedForm.maund);
     if (isNaN(maundNum) || maundNum <= 0) { alert('Please enter a valid positive quantity in Maund.'); return; }
     const priceNum = parseFloat(feedForm.pricePerKg || '0');

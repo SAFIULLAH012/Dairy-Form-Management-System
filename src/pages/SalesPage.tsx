@@ -6,6 +6,7 @@ import { Truck, Plus, DollarSign, Printer, Calendar, ArrowRight } from 'lucide-r
 export const SalesPage: React.FC = () => {
   const [invoices, setInvoices] = useState<any[]>([]);
   const [customers, setCustomers] = useState<any[]>([]);
+  const [farmName, setFarmName] = useState('BA Farm');
   const [loading, setLoading] = useState(true);
 
   // Modals
@@ -42,15 +43,19 @@ export const SalesPage: React.FC = () => {
     try {
       setLoading(true);
       const today = new Date().toISOString().slice(0, 10);
-      const [invList,custList, milkEntries] = await Promise.all([
+      const [invList, custList, milkEntries, settings] = await Promise.all([
         api.getDeliveries(),
         api.getCustomers(),
-        api.getMilkTotals(today, today)
+        api.getMilkTotals(today, today),
+        api.getSettings().catch(() => null),
       ]);
       setInvoices(invList);
       setCustomers(custList);
+      if (settings?.farmName) {
+        setFarmName(settings.farmName);
+      }
       
-      const todaysMilk = milkEntries.reduce((sum: number, entry: any) => sum + (entry.actualLitres || 0), 0);
+      const todaysMilk = milkEntries.reduce((sum: number, entry: any) => sum + (entry.totalLitres || entry.actualLitres || 0), 0);
       
       if (custList.length > 0 && !invoiceForm.customerId) {
         setInvoiceForm(prev => ({
@@ -77,6 +82,10 @@ export const SalesPage: React.FC = () => {
     (parseFloat(invoiceForm.litres) || 0) * (parseFloat(invoiceForm.ratePerL) || 0);
 
   const handleSaveInvoice = async () => {
+    if (!invoiceForm.customerId) {
+      alert('Please select or add a customer first.');
+      return;
+    }
     if (!invoiceForm.litres || parseFloat(invoiceForm.litres) <= 0) {
       alert('Please enter valid litres.');
       return;
@@ -593,9 +602,9 @@ export const SalesPage: React.FC = () => {
         }
       >
         {selectedInvoiceToPrint && (
-          <div className="p-4 bg-white border border-stone-300 rounded-xl space-y-4 text-xs font-mono text-stone-900">
+          <div className="p-4 bg-white border border-stone-300 rounded-xl space-y-4 text-xs font-mono text-stone-900" id="delivery-receipt">
             <div className="text-center border-b border-stone-200 pb-2">
-              <h3 className="font-bold text-base tracking-wider uppercase">Sunrise Dairy Farm</h3>
+              <h3 className="font-bold text-base tracking-wider uppercase">{farmName}</h3>
               <p className="text-[11px] text-stone-500">Official Milk Delivery Slip</p>
             </div>
 

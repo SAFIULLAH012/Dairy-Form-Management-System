@@ -24,8 +24,9 @@ const MilkSparkline: React.FC<{ data: number[]; color?: string }> = ({ data, col
   const max = Math.max(...data, 0.1);
   const w = 160;
   const h = 40;
+  const denom = data.length > 1 ? data.length - 1 : 1;
   const pts = data.map((v, i) => {
-    const x = (i / (data.length - 1)) * w;
+    const x = (i / denom) * w;
     const y = h - (v / max) * h;
     return `${x},${y}`;
   });
@@ -40,7 +41,7 @@ const MilkSparkline: React.FC<{ data: number[]; color?: string }> = ({ data, col
         strokeLinejoin="round"
       />
       {data.map((v, i) => {
-        const x = (i / (data.length - 1)) * w;
+        const x = (i / denom) * w;
         const y = h - (v / max) * h;
         return <circle key={i} cx={x} cy={y} r={2.5} fill={color} />;
       })}
@@ -276,8 +277,10 @@ const CowProfilePanel: React.FC<{ animal: any; onClose: () => void }> = ({ anima
                     <div key={i} className="flex items-start gap-2 text-xs p-2.5 bg-rose-50 border border-rose-100 rounded-lg">
                       <AlertCircle className="w-3.5 h-3.5 text-rose-500 mt-0.5 shrink-0" />
                       <div>
-                        <div className="font-bold text-stone-800">{h.diagnosis || h.title || 'Health Case'}</div>
-                        <div className="text-stone-500">{h.date || h.createdAt || ''} · {h.treatment || h.notes || ''}</div>
+                        <div className="font-bold text-stone-800">{h.diagnosis || h.problem || h.title || 'Health Case'}</div>
+                        <div className="text-stone-500">
+                          {h.date || h.createdAt || ''} · {[h.medicine, h.dose].filter(Boolean).join(' ') || h.treatment || h.notes || 'Treated'}
+                        </div>
                       </div>
                     </div>
                   ))}
@@ -298,8 +301,10 @@ const CowProfilePanel: React.FC<{ animal: any; onClose: () => void }> = ({ anima
                 <div className="space-y-2 max-h-48 overflow-y-auto">
                   {breedingRecords.map((b: any, i) => (
                     <div key={i} className="text-xs p-2.5 bg-purple-50 border border-purple-100 rounded-lg">
-                      <div className="font-bold text-stone-800">{b.method || 'AI/Natural'} · {b.date || b.breedingDate}</div>
-                      <div className="text-stone-500">{b.sireId ? `Sire: ${b.sireId}` : ''} {b.result ? `· ${b.result}` : ''}</div>
+                      <div className="font-bold text-stone-800">{b.event || b.method || 'Breeding Event'} · {b.date || b.breedingDate}</div>
+                      <div className="text-stone-500">
+                        {b.sireBreedOrId || b.sireId ? `Sire: ${b.sireBreedOrId || b.sireId}` : ''} {b.status || b.result ? `· ${b.status || b.result}` : ''}
+                      </div>
                     </div>
                   ))}
                 </div>

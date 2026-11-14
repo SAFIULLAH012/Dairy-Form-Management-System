@@ -50,6 +50,9 @@ export const ReportsPage: React.FC = () => {
       ['Total Other Expenses (Rs.)', report.kpis.totalExpenses],
       ['Total Operational Costs (Rs.)', report.kpis.totalCosts],
       ['Net Margin (Profit / Loss) (Rs.)', report.kpis.netProfitOrLoss],
+      ['Cost Per Litre (Rs./L)', report.kpis.totalMilkLitres > 0 ? (report.kpis.totalCosts / report.kpis.totalMilkLitres).toFixed(2) : '0'],
+      ['Revenue Per Litre (Rs./L)', report.kpis.totalMilkLitres > 0 ? (report.kpis.totalMilkSales / report.kpis.totalMilkLitres).toFixed(2) : '0'],
+      ['Margin Per Litre (Rs./L)', report.kpis.totalMilkLitres > 0 ? ((report.kpis.totalMilkSales - report.kpis.totalCosts) / report.kpis.totalMilkLitres).toFixed(2) : '0'],
     ];
 
     const escapeCsv = (val: any) => {
@@ -204,6 +207,44 @@ export const ReportsPage: React.FC = () => {
               </div>
             </div>
           </div>
+
+          {/* Unit Economics (Cost & Margin per Litre) */}
+          {report.kpis.totalMilkLitres > 0 && (() => {
+            const milkL = report.kpis.totalMilkLitres;
+            const costPerL = Number((report.kpis.totalCosts / milkL).toFixed(2));
+            const feedCostPerL = Number((report.kpis.totalFeedCost / milkL).toFixed(2));
+            const revPerL = Number((report.kpis.totalMilkSales / milkL).toFixed(2));
+            const marginPerL = Number((revPerL - costPerL).toFixed(2));
+            return (
+              <div className="bg-white p-4 rounded-xl border border-stone-200 shadow-xs space-y-3">
+                <div className="flex items-center justify-between border-b border-stone-100 pb-2">
+                  <h3 className="font-bold text-sm text-stone-900 flex items-center gap-1.5">
+                    <TrendingUp className="w-4 h-4 text-emerald-700" />
+                    <span>Milk Production Unit Economics (Per Litre Cost & Margin)</span>
+                  </h3>
+                  <span className="text-xs text-stone-500 font-medium">Based on {milkL} Litres logged</span>
+                </div>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-center text-xs">
+                  <div className="p-3 bg-stone-50 rounded-lg border border-stone-100">
+                    <span className="text-[10px] text-stone-500 uppercase font-bold">Feed Cost / L</span>
+                    <div className="text-lg font-black text-amber-700 mt-0.5">Rs. {feedCostPerL}</div>
+                  </div>
+                  <div className="p-3 bg-stone-50 rounded-lg border border-stone-100">
+                    <span className="text-[10px] text-stone-500 uppercase font-bold">Total Cost / L</span>
+                    <div className="text-lg font-black text-stone-900 mt-0.5">Rs. {costPerL}</div>
+                  </div>
+                  <div className="p-3 bg-stone-50 rounded-lg border border-stone-100">
+                    <span className="text-[10px] text-stone-500 uppercase font-bold">Average Sale / L</span>
+                    <div className="text-lg font-black text-blue-700 mt-0.5">Rs. {revPerL}</div>
+                  </div>
+                  <div className={`p-3 rounded-lg border ${marginPerL >= 0 ? 'bg-emerald-50/70 border-emerald-200 text-emerald-900' : 'bg-rose-50 border-rose-200 text-rose-900'}`}>
+                    <span className="text-[10px] uppercase font-bold">Net Margin / L</span>
+                    <div className="text-lg font-black mt-0.5">Rs. {marginPerL}</div>
+                  </div>
+                </div>
+              </div>
+            );
+          })()}
 
           {/* Expenses Breakdown */}
           <div className="bg-white p-4 rounded-xl border border-stone-200 shadow-xs space-y-3">

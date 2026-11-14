@@ -7,6 +7,14 @@ export const ExpensesPage: React.FC = () => {
   const [expenses, setExpenses] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [categoryFilter, setCategoryFilter] = useState('');
+  const [fromDate, setFromDate] = useState(() => {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-01`;
+  });
+  const [toDate, setToDate] = useState(() => {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  });
   const [showAddModal, setShowAddModal] = useState(false);
 
   const categories = [
@@ -34,7 +42,7 @@ export const ExpensesPage: React.FC = () => {
   const loadData = async () => {
     try {
       setLoading(true);
-      const list = await api.getExpenses(undefined, undefined, categoryFilter || undefined);
+      const list = await api.getExpenses(fromDate, toDate, categoryFilter || undefined);
       setExpenses(list);
     } catch (err) {
       console.error('Error loading expenses:', err);
@@ -45,7 +53,7 @@ export const ExpensesPage: React.FC = () => {
 
   useEffect(() => {
     loadData();
-  }, [categoryFilter]);
+  }, [fromDate, toDate, categoryFilter]);
 
   const handleSaveExpense = async () => {
     const amt = parseFloat(formData.amount);
@@ -73,8 +81,26 @@ export const ExpensesPage: React.FC = () => {
     <div className="space-y-4 animate-in fade-in duration-150">
       {/* Top action toolbar */}
       <div className="flex flex-wrap items-center justify-between gap-3 bg-white p-3.5 rounded-xl border border-stone-200 shadow-xs">
-        <div className="flex items-center gap-2">
-          <label className="text-xs text-stone-600 font-medium">Category Filter:</label>
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="flex items-center gap-1.5 text-xs text-stone-600 font-medium">
+            <Calendar className="w-4 h-4 text-emerald-700" />
+            <span>Range:</span>
+          </div>
+          <input
+            type="date"
+            value={fromDate}
+            onChange={e => setFromDate(e.target.value)}
+            className="text-xs px-2.5 py-1.5 bg-stone-50 border border-stone-200 rounded-lg text-stone-700 font-medium"
+          />
+          <span className="text-stone-400 text-xs">to</span>
+          <input
+            type="date"
+            value={toDate}
+            onChange={e => setToDate(e.target.value)}
+            className="text-xs px-2.5 py-1.5 bg-stone-50 border border-stone-200 rounded-lg text-stone-700 font-medium"
+          />
+
+          <label className="text-xs text-stone-600 font-medium ml-2">Category:</label>
           <select
             value={categoryFilter}
             onChange={e => setCategoryFilter(e.target.value)}

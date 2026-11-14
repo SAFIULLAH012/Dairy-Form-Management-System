@@ -8,6 +8,7 @@ export const CustomersPage: React.FC = () => {
   const [deliveries, setDeliveries] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [showAddModal, setShowAddModal] = useState(false);
+  const [editingCustomer, setEditingCustomer] = useState<any | null>(null);
   const [selectedLedgerCustomer, setSelectedLedgerCustomer] = useState<any | null>(null);
 
   const [formData, setFormData] = useState({
@@ -55,24 +56,56 @@ export const CustomersPage: React.FC = () => {
 
     try {
       await api.createCustomer({
+        ...(editingCustomer ? { id: editingCustomer.id } : {}),
         ...formData,
         name: formData.name.trim(),
         phone: formData.phone.trim(),
         defaultRatePerL: rate,
         paymentTermsDays: terms,
-        status: 'Active',
+        status: editingCustomer?.status || 'Active',
       });
 
       setShowAddModal(false);
+      setEditingCustomer(null);
       loadData();
     } catch (err: any) {
-      alert(err.message || 'Error creating customer');
+      alert(err.message || 'Error saving customer');
     }
+  };
+
+  const handleOpenAdd = () => {
+    setEditingCustomer(null);
+    setFormData({
+      name: '',
+      company: '',
+      phone: '',
+      address: '',
+      defaultRatePerL: '210',
+      paymentTermsDays: '7',
+      notes: '',
+    });
+    setShowAddModal(true);
+  };
+
+  const handleOpenEdit = (c: any) => {
+    setEditingCustomer(c);
+    setFormData({
+      name: c.name || '',
+      company: c.company || '',
+      phone: c.phone || '',
+      address: c.address || '',
+      defaultRatePerL: String(c.defaultRatePerL || 210),
+      paymentTermsDays: String(c.paymentTermsDays || 7),
+      notes: c.notes || '',
+    });
+    setShowAddModal(true);
   };
 
   // Compute receivables & totals for each customer
   const customerRows = customers.map(c => {
-    const custDeliveries = deliveries.filter(d => d.customerId === c.id || d.customerName === c.name);
+    const custDeliveries = deliveries.filter(
+      d => d.customerId === c.id || (!d.customerId && d.customerName === c.name)
+    );
     const totalBilled = custDeliveries.reduce((s, d) => s + d.totalAmount, 0);
     const totalPaid = custDeliveries.reduce((s, d) => s + d.paidAmount, 0);
     const totalOutstanding = custDeliveries.reduce((s, d) => s + d.remainingBalance, 0);
@@ -97,18 +130,7 @@ export const CustomersPage: React.FC = () => {
         </div>
 
         <button
-          onClick={() => {
-            setFormData({
-              name: '',
-              company: '',
-              phone: '',
-              address: '',
-              defaultRatePerL: '210',
-              paymentTermsDays: '7',
-              notes: '',
-            });
-            setShowAddModal(true);
-          }}
+          onClick={handleOpenAdd}
           className="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-bold text-white bg-[#16734b] hover:bg-[#125e3d] rounded-lg shadow-xs transition-colors cursor-pointer"
         >
           <Plus className="w-4 h-4" />
@@ -167,12 +189,20 @@ export const CustomersPage: React.FC = () => {
                       )}
                     </td>
                     <td className="p-3 text-right">
-                      <button
-                        onClick={() => setSelectedLedgerCustomer(c)}
-                        className="px-2.5 py-1 text-xs font-bold text-stone-700 bg-stone-100 hover:bg-stone-200 rounded cursor-pointer"
-                      >
-                        View Ledger
-                      </button>
+                      <div className="flex items-center justify-end gap-1.5">
+                        <button
+                          onClick={() => handleOpenEdit(c)}
+                          className="px-2.5 py-1 text-xs font-bold text-stone-700 bg-stone-100 hover:bg-stone-200 rounded cursor-pointer"
+                        >
+                          Edit
+                        </button>
+                        <button
+                          onClick={() => setSelectedLedgerCustomer(c)}
+                          className="px-2.5 py-1 text-xs font-bold text-emerald-800 bg-emerald-50 hover:bg-emerald-100 rounded cursor-pointer"
+                        >
+                          View Ledger
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))
@@ -182,11 +212,14 @@ export const CustomersPage: React.FC = () => {
         </div>
       </div>
 
-      {/* Add Customer Modal */}
+      {/* Add / Edit Customer Modal */}
       <Modal
-        title="Add Dairy Customer / Buyer"
+        title={editingCustomer ? `Edit Customer: ${editingCustomer.name}` : "Add Dairy Customer / Buyer"}
         isOpen={showAddModal}
-        onClose={() => setShowAddModal(false)}
+        onClose={() => {
+          setShowAddModal(false);
+          setEditingCustomer(null);
+        }}
         footer={
           <>
             <button

@@ -98,9 +98,33 @@ export const SettingsPage: React.FC = () => {
         setRestorePayload(json);
       } catch (err: any) {
         alert('Invalid JSON file format: ' + err.message);
+      } finally {
+        e.target.value = '';
       }
     };
     reader.readAsText(file);
+  };
+
+  const handleDownloadBackup = async () => {
+    try {
+      setLoading(true);
+      const backupData = await api.exportBackup();
+      const jsonStr = JSON.stringify(backupData, null, 2);
+      const blob = new Blob([jsonStr], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      const now = new Date().toISOString().slice(0, 10);
+      a.href = url;
+      a.download = `dairy_farm_backup_${now}.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch (err: any) {
+      alert('Failed to generate backup: ' + (err.message || err));
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleConfirmRestore = async () => {
@@ -380,14 +404,14 @@ export const SettingsPage: React.FC = () => {
               <p className="text-[11px] text-stone-500">
                 Download a clean, verified JSON backup file to your local computer or phone.
               </p>
-              <a
-                href="/api/backup/export"
-                download
-                className="inline-flex items-center gap-1.5 px-4 py-2 bg-[#16734b] hover:bg-[#125e3d] text-white text-xs font-bold rounded-lg cursor-pointer"
+              <button
+                type="button"
+                onClick={handleDownloadBackup}
+                className="inline-flex items-center gap-1.5 px-4 py-2 bg-[#16734b] hover:bg-[#125e3d] text-white text-xs font-bold rounded-lg cursor-pointer shadow-xs transition-colors"
               >
                 <Download className="w-3.5 h-3.5" />
                 <span>Download Backup File</span>
-              </a>
+              </button>
             </div>
 
             {/* Import / Restore Card */}
