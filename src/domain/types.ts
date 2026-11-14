@@ -123,6 +123,7 @@ export interface FeedTransaction {
   totalCost: number; // kg * pricePerKg
   supplier?: string;
   notes?: string;
+  cowCount?: number;
   createdAt: string;
 }
 

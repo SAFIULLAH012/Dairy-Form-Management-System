@@ -28,6 +28,7 @@ export class FeedInventoryService {
     supplier?: string;
     notes?: string;
     user?: string;
+    cowCount?: number;
   }): Promise<FeedTransaction> {
     const kg = maundToKg(params.maund);
     const totalCost = calculateFeedCost(kg, params.pricePerKg);
@@ -44,6 +45,7 @@ export class FeedInventoryService {
       totalCost,
       supplier: params.supplier,
       notes: params.notes,
+      cowCount: params.cowCount,
       createdAt: now,
     };
 

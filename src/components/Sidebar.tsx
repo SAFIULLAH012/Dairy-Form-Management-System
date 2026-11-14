@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import { api } from '../client/api';
 import {
   LayoutDashboard,
   Milk,
@@ -17,12 +18,14 @@ import {
   CircleDollarSign,
   ChevronRight,
   ShieldAlert,
+  LayoutGrid,
 } from 'lucide-react';
 
 export type NavItem =
   | 'dashboard'
   | 'animals'
   | 'male'
+  | 'cowprofiles'
   | 'milk'
   | 'deliveries'
   | 'customers'
@@ -52,6 +55,13 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onClose,
   pendingCount,
 }) => {
+  const [farmName, setFarmName] = useState('Dairy Farm ERP');
+
+  useEffect(() => {
+    api.getSettings().then(res => {
+      if (res && res.farmName) setFarmName(res.farmName);
+    }).catch(console.error);
+  }, []);
   const sections = [
     {
       group: 'Overview',
@@ -63,7 +73,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
     {
       group: 'Herd Management',
       items: [
-        { id: 'animals', label: 'Female Herd', icon: ChevronRight },
+        { id: 'cowprofiles', label: '🐄 All Cow Profiles', icon: LayoutGrid },
+        { id: 'animals', label: 'Female Cows / Animals', icon: ChevronRight },
         { id: 'male', label: 'Male Animals', icon: ChevronRight },
         { id: 'breeding', label: 'Breeding & Calves', icon: GitBranch },
         { id: 'health', label: 'Health & Vet', icon: Stethoscope },
@@ -116,13 +127,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
           <div>
             <div className="flex items-center gap-2">
               <span className="text-xl">🐄</span>
-              <span className="font-extrabold text-base tracking-wide text-white">
-                Dairy Farm ERP
+              <span className="font-extrabold text-base tracking-wide text-white truncate max-w-[190px]">
+                {farmName}
               </span>
-            </div>
-            <div className="text-[11px] font-medium text-emerald-300/80 mt-0.5 flex items-center gap-1">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
-              Offline-First Local System
             </div>
           </div>
         </div>

@@ -13,7 +13,14 @@ export class SQLiteDatabase implements IDatabaseAdapter {
   }
 
   async init(): Promise<void> {
-    const SQL = await initSqlJs();
+    const SQL = await initSqlJs({
+      locateFile: file => {
+        if (typeof window !== 'undefined') {
+          return `/${file}`;
+        }
+        return path.join(process.cwd(), 'node_modules', 'sql.js', 'dist', file);
+      }
+    });
 
     if (fs.existsSync(this.dbPath)) {
       try {
@@ -116,21 +123,21 @@ export class SQLiteDatabase implements IDatabaseAdapter {
 
   private seedDefaultsIfEmpty(): void {
     const db = this.getDb();
-    const countAnimals = this.get<{ count: number }>('SELECT count(*) as count FROM animals');
+    const countSettings = this.get<{ count: number }>('SELECT count(*) as count FROM farm_settings');
 
-    if (countAnimals && countAnimals.count > 0) {
-      return; // Already initialized
+    if (countSettings && countSettings.count > 0) {
+      return; // Already initialized with default settings
     }
 
     const now = new Date().toISOString();
 
-    // Seed groups
+    // Seed default groups (user can add/remove from Settings)
     const groups = ['High', 'Low', 'Breeding Male', 'Calves', 'Fresh'];
     for (const g of groups) {
       db.run('INSERT OR IGNORE INTO groups_list (name) VALUES (?)', [g]);
     }
 
-    // Seed shifts
+    // Seed milk shifts (required for milk recording)
     db.run(
       'INSERT OR IGNORE INTO milk_shifts (id, name, start_time, end_time, active, reminder_minutes) VALUES (?, ?, ?, ?, ?, ?)',
       ['SHIFT_MORN', 'Morning', '06:00', '08:30', 1, 30]
@@ -144,7 +151,7 @@ export class SQLiteDatabase implements IDatabaseAdapter {
       ['SHIFT_EVE', 'Evening', '18:00', '20:30', 1, 30]
     );
 
-    // Seed settings
+    // Seed default farm settings (required for system to work)
     db.run(
       `INSERT OR IGNORE INTO farm_settings (
         id, farm_name, farm_address, phone, email, currency, date_format, time_format,
@@ -153,10 +160,10 @@ export class SQLiteDatabase implements IDatabaseAdapter {
       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         'DEFAULT_SETTINGS',
-        'Sunrise Dairy Farm',
-        'Rural Farm Sector 4',
-        '+92 300 1234567',
-        'info@sunrisedairy.local',
+        'My Dairy Farm',
+        '',
+        '',
+        '',
         'PKR',
         'YYYY-MM-DD',
         '24h',
@@ -172,159 +179,7 @@ export class SQLiteDatabase implements IDatabaseAdapter {
       ]
     );
 
-    // Seed sample customers from prototype
-    db.run(
-      `INSERT OR IGNORE INTO customers (id, name, company, phone, default_rate_per_l, payment_terms_days, status, created_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-      ['CUST_1', 'Nestlé', 'Nestlé Pakistan', '+92 42 111 637 853', 210, 7, 'Active', now]
-    );
-    db.run(
-      `INSERT OR IGNORE INTO customers (id, name, company, phone, default_rate_per_l, payment_terms_days, status, created_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-      ['CUST_2', 'Local Dairy', 'Local Chilling Center', '+92 321 9876543', 200, 7, 'Active', now]
-    );
-
-    // Seed prototype animals
-    const initialAnimals = [
-      {
-        id: 'C-001',
-        cow_number: 'C-001',
-        tag1: 'TAG-001',
-        sex: 'Female',
-        dob: '2022-01-12',
-        breed: 'Friesian Cross',
-        group_name: 'High',
-        stage: 'Adult',
-        repro_status: 'Pregnant',
-        milk_status: 'Milking',
-        status: 'Active',
-        purchase_date: '2023-01-05',
-        purchase_price: 280000,
-        supplier: 'Farm A',
-        notes: 'High yielding, stable fat content',
-      },
-      {
-        id: 'C-002',
-        cow_number: 'C-002',
-        tag1: 'TAG-002',
-        sex: 'Female',
-        dob: '2021-08-03',
-        breed: 'Jersey Cross',
-        group_name: 'Low',
-        stage: 'Adult',
-        repro_status: 'Repeat',
-        milk_status: 'Milking',
-        status: 'Active',
-        purchase_date: '2022-11-10',
-        purchase_price: 250000,
-        supplier: 'Farm B',
-        notes: 'Regular check needed',
-      },
-      {
-        id: 'H-011',
-        cow_number: 'H-011',
-        tag1: 'TAG-011',
-        sex: 'Female',
-        dob: '2024-06-18',
-        breed: 'Cross',
-        group_name: 'Low',
-        stage: 'Heifer',
-        repro_status: 'Nil',
-        milk_status: 'Dry',
-        status: 'Active',
-        purchase_date: '2024-12-01',
-        purchase_price: 180000,
-        supplier: 'Farm C',
-        notes: 'Target first breeding in 4 months',
-      },
-      {
-        id: 'M-007',
-        cow_number: 'M-007',
-        tag1: 'BULL-007',
-        sex: 'Male',
-        dob: '2025-02-10',
-        breed: 'Cross',
-        group_name: 'Breeding Male',
-        stage: 'Male',
-        repro_status: 'N/A',
-        milk_status: 'N/A',
-        status: 'Active',
-        purchase_date: '2025-03-01',
-        purchase_price: 200000,
-        supplier: 'Farm D',
-        notes: 'Breeding sire pedigree',
-      },
-    ];
-
-    for (const a of initialAnimals) {
-      db.run(
-        `INSERT INTO animals (
-          id, cow_number, tag1, sex, dob, breed, group_name, stage, repro_status,
-          milk_status, status, purchase_date, purchase_price, supplier, notes, created_at, updated_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        [
-          a.id,
-          a.cow_number,
-          a.tag1,
-          a.sex,
-          a.dob,
-          a.breed,
-          a.group_name,
-          a.stage,
-          a.repro_status,
-          a.milk_status,
-          a.status,
-          a.purchase_date,
-          a.purchase_price,
-          a.supplier,
-          a.notes,
-          now,
-          now,
-        ]
-      );
-
-      db.run(
-        'INSERT INTO animal_identifiers (id, animal_id, type, value) VALUES (?, ?, ?, ?)',
-        [`ID_${a.id}`, a.id, 'COW_NUMBER', a.id]
-      );
-      if (a.tag1) {
-        db.run(
-          'INSERT INTO animal_identifiers (id, animal_id, type, value) VALUES (?, ?, ?, ?)',
-          [`TAG_${a.id}`, a.id, 'TAG_1', a.tag1]
-        );
-      }
-    }
-
-    // Seed feed types
-    const feeds = [
-      { name: 'Silage', desc: 'Fermented maize silage', price: 18.5 },
-      { name: 'Green Fodder', desc: 'Fresh Rhodes grass / alfalfa', price: 9.0 },
-      { name: 'Wanda', desc: 'Commercial dairy ration 18% CP', price: 85.0 },
-      { name: 'Cotton Seed Cake', desc: 'High protein concentrate', price: 95.0 },
-    ];
-
-    for (const f of feeds) {
-      db.run(
-        'INSERT OR IGNORE INTO feed_types (id, name, description, default_price_per_kg) VALUES (?, ?, ?, ?)',
-        [`FEED_${f.name.replace(/\s+/g, '_')}`, f.name, f.desc, f.price]
-      );
-
-      // Seed initial inventory
-      db.run(
-        `INSERT OR IGNORE INTO inventory_items (
-          id, name, category, current_stock, unit, min_stock_threshold, avg_daily_consumption, updated_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-        [
-          `INV_${f.name.replace(/\s+/g, '_')}`,
-          f.name,
-          'FEED',
-          800, // 800 kg stock
-          'KG',
-          200, // 200 kg threshold
-          150, // 150 kg/day avg
-          now,
-        ]
-      );
-    }
+    // No sample customers, feed types, inventory, or animals seeded.
+    // User will add everything fresh from the UI.
   }
 }

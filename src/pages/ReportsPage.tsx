@@ -116,12 +116,13 @@ export const ReportsPage: React.FC = () => {
             </div>
 
             <div className="bg-white p-4 rounded-xl border border-stone-200 shadow-xs">
-              <span className="text-xs text-stone-500 font-medium">Milk Sales Revenue</span>
+              <span className="text-xs text-stone-500 font-medium">Total Revenue</span>
               <div className="text-2xl font-black text-stone-900 mt-1">
-                Rs. {report.kpis.totalMilkSales?.toLocaleString()}
+                Rs. {report.kpis.totalIncome?.toLocaleString()}
               </div>
-              <div className="text-[11px] text-emerald-700 font-semibold mt-1">
-                Collected: Rs. {report.kpis.totalCashReceived?.toLocaleString()}
+              <div className="text-[11px] text-emerald-700 font-semibold mt-1 flex flex-col gap-0.5">
+                <span>Milk Sales: Rs. {report.kpis.totalMilkSales?.toLocaleString()}</span>
+                <span>Animal Sales: Rs. {report.kpis.totalAnimalSalesRevenue?.toLocaleString()}</span>
               </div>
             </div>
 
@@ -205,6 +206,39 @@ export const ReportsPage: React.FC = () => {
               ))}
             </div>
           </div>
+
+          {/* Sold Animals Section */}
+          {report.soldAnimals && report.soldAnimals.length > 0 && (
+            <div className="bg-white p-4 rounded-xl border border-stone-200 shadow-xs space-y-3">
+              <h3 className="font-bold text-sm text-stone-900">Animals Sold in Period</h3>
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-xs text-stone-700">
+                  <thead className="bg-stone-50 text-[11px] font-bold uppercase tracking-wider text-stone-500 border-b border-stone-200">
+                    <tr>
+                      <th className="p-2">Tag Number</th>
+                      <th className="p-2">Breed</th>
+                      <th className="p-2">Sale Date</th>
+                      <th className="p-2">Buyer</th>
+                      <th className="p-2 text-right">Sale Price (Rs.)</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-stone-100">
+                    {report.soldAnimals.map((a: any) => (
+                      <tr key={a.id} className="hover:bg-stone-50/70 transition-colors">
+                        <td className="p-2 font-bold">{a.id}</td>
+                        <td className="p-2">{a.breed}</td>
+                        <td className="p-2">{a.saleDate}</td>
+                        <td className="p-2">{a.buyer || '-'}</td>
+                        <td className="p-2 text-right font-bold text-emerald-700">
+                          {a.salePrice?.toLocaleString()}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
         </>
       )}
     </div>

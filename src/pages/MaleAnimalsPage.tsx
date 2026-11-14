@@ -143,9 +143,9 @@ export const MaleAnimalsPage: React.FC = () => {
   const filteredMales = males.filter(m => {
     const q = searchTerm.toLowerCase();
     return (
-      m.id.toLowerCase().includes(q) ||
-      (m.tag1 && m.tag1.toLowerCase().includes(q)) ||
-      (m.breed && m.breed.toLowerCase().includes(q))
+      (m.id && String(m.id).toLowerCase().includes(q)) ||
+      (m.tag1 && String(m.tag1).toLowerCase().includes(q)) ||
+      (m.breed && String(m.breed).toLowerCase().includes(q))
     );
   });
 
@@ -229,10 +229,10 @@ export const MaleAnimalsPage: React.FC = () => {
                     </td>
                     <td className="p-3 text-stone-600">
                       {m.purchaseDate || '-'}
-                      {m.purchasePrice ? ` · Rs. ${m.purchasePrice.toLocaleString()}` : ''}
+                      {m.purchasePrice ? ` · Rs. ${Number(m.purchasePrice).toLocaleString()}` : ''}
                     </td>
                     <td className="p-3 text-stone-600">
-                      {m.saleDate ? `${m.saleDate} (Rs. ${m.salePrice?.toLocaleString()})` : '-'}
+                      {m.saleDate ? `${m.saleDate} (Rs. ${Number(m.salePrice).toLocaleString()})` : '-'}
                     </td>
                     <td className="p-3">
                       <span

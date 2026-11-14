@@ -1,7 +1,7 @@
 /**
  * Local Application Service for Dairy Farm ERP
  * Executes domain services directly in-process against local SQLite repository adapters.
- * Enables 100% standalone offline operation on Android and in the browser WITHOUT Express.
+ * Enables 100% standalone offline operation on desktop and in the browser WITHOUT Express.
  */
 
 import { IDatabaseAdapter, IFileStorageAdapter } from '../../infrastructure/platform/interfaces.ts';
@@ -118,7 +118,9 @@ export class LocalAppService {
       this.growthRepo,
       this.animalRepo,
       this.reminderRepo,
-      this.auditRepo
+      this.auditRepo,
+      this.inventoryRepo,
+      this.expenseRepo
     );
     this.salesService = new SalesInvoiceService(
       this.deliveryRepo,
@@ -268,6 +270,11 @@ export class LocalAppService {
   async getInventoryItems() {
     await this.ensureInit();
     return this.feedService.getInventoryStatus();
+  }
+
+  async saveInventoryItem(data: any) {
+    await this.ensureInit();
+    return this.inventoryRepo.saveItem(data);
   }
 
   async recordStockMovement(data: any) {

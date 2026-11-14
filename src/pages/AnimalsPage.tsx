@@ -37,22 +37,18 @@ export const AnimalsPage: React.FC = () => {
   // Form states
   const [formData, setFormData] = useState({
     id: '',
-    cowNumber: '',
-    tag1: '',
-    tag2: '',
     dob: new Date().toISOString().slice(0, 10),
-    breed: 'Friesian Cross',
+    originType: 'Farm Born',
+    purchasePrice: '',
+    supplier: '',
+    simpleState: 'Milking',
     group: 'High',
     stage: 'Adult',
     reproStatus: 'Milking',
     milkStatus: 'Milking',
     status: 'Active',
-    purchaseDate: '',
-    purchasePrice: '',
-    supplier: '',
     notes: '',
     photoUrl: '',
-    birthWeight: '',
   });
 
   const [soldForm, setSoldForm] = useState({
@@ -95,22 +91,18 @@ export const AnimalsPage: React.FC = () => {
     setEditingAnimal(null);
     setFormData({
       id: '',
-      cowNumber: '',
-      tag1: '',
-      tag2: '',
       dob: new Date().toISOString().slice(0, 10),
-      breed: 'Friesian Cross',
+      originType: 'Farm Born',
+      purchasePrice: '',
+      supplier: '',
+      simpleState: 'Milking',
       group: groups[0] || 'High',
       stage: 'Adult',
       reproStatus: 'Milking',
       milkStatus: 'Milking',
       status: 'Active',
-      purchaseDate: '',
-      purchasePrice: '',
-      supplier: '',
       notes: '',
       photoUrl: '',
-      birthWeight: '',
     });
     setShowAddModal(true);
   };
@@ -119,43 +111,58 @@ export const AnimalsPage: React.FC = () => {
     setEditingAnimal(animal);
     setFormData({
       id: animal.id,
-      cowNumber: animal.cowNumber || '',
-      tag1: animal.tag1 || '',
-      tag2: animal.tag2 || '',
       dob: animal.dob || '',
-      breed: animal.breed || '',
+      originType: animal.purchasePrice ? 'Purchased' : 'Farm Born',
+      purchasePrice: animal.purchasePrice ? String(animal.purchasePrice) : '',
+      supplier: animal.supplier || '',
+      simpleState: animal.stage === 'Calf' ? 'Calf' : animal.stage === 'Heifer' ? 'Heifer' : animal.reproStatus === 'Pregnant' ? 'Pregnant' : animal.milkStatus === 'Dry' ? 'Dry' : 'Milking',
       group: animal.group || 'High',
       stage: animal.stage || 'Adult',
       reproStatus: animal.reproStatus || 'Milking',
       milkStatus: animal.milkStatus || 'Milking',
       status: animal.status || 'Active',
-      purchaseDate: animal.purchaseDate || '',
-      purchasePrice: animal.purchasePrice ? String(animal.purchasePrice) : '',
-      supplier: animal.supplier || '',
       notes: animal.notes || '',
       photoUrl: animal.photoUrl || '',
-      birthWeight: animal.birthWeight ? String(animal.birthWeight) : '',
     });
     setShowAddModal(true);
   };
 
   const handleSaveAnimal = async () => {
     if (!formData.id.trim()) {
-      alert('Animal ID is required.');
-      return;
-    }
-    if (!formData.dob) {
-      alert('Date of birth is required.');
+      alert('Tag Number is required.');
       return;
     }
 
     try {
+      let stage = 'Adult', reproStatus = 'Milking', milkStatus = 'Milking';
+      switch(formData.simpleState) {
+        case 'Calf': stage = 'Calf'; reproStatus = 'Nil'; milkStatus = 'Not Milking'; break;
+        case 'Heifer': stage = 'Heifer'; reproStatus = 'Open'; milkStatus = 'Not Milking'; break;
+        case 'Milking': stage = 'Adult'; reproStatus = 'Milking'; milkStatus = 'Milking'; break;
+        case 'Pregnant': stage = 'Adult'; reproStatus = 'Pregnant'; milkStatus = 'Dry'; break;
+        case 'Dry': stage = 'Adult'; reproStatus = 'Open'; milkStatus = 'Dry'; break;
+      }
+
       const payload: any = {
-        ...formData,
+        id: formData.id.trim(),
         sex: 'Female',
-        purchasePrice: formData.purchasePrice ? parseFloat(formData.purchasePrice) : undefined,
-        birthWeight: formData.birthWeight ? parseFloat(formData.birthWeight) : undefined,
+        dob: formData.dob || new Date().toISOString().slice(0, 10),
+        breed: 'Unknown',
+        group: formData.group || (groups[0] || 'High'),
+        stage,
+        reproStatus,
+        milkStatus,
+        status: formData.status || 'Active',
       };
+      
+      if (formData.originType === 'Purchased') {
+        payload.purchasePrice = formData.purchasePrice ? parseFloat(formData.purchasePrice) : 0;
+        payload.supplier = formData.supplier;
+        payload.purchaseDate = new Date().toISOString().slice(0, 10);
+      } else {
+        payload.purchasePrice = 0;
+        payload.supplier = '';
+      }
 
       if (editingAnimal) {
         await api.updateAnimal(editingAnimal.id, payload);
@@ -184,15 +191,24 @@ export const AnimalsPage: React.FC = () => {
     reader.readAsDataURL(file);
   };
 
+  const [profileHealth, setProfileHealth] = useState<any[]>([]);
+  const [profileBreeding, setProfileBreeding] = useState<any[]>([]);
+
   const handleOpenProfile = async (animal: any) => {
     setSelectedAnimalProfile(animal);
+    setProfileHealth([]);
+    setProfileBreeding([]);
     try {
-      const [hist, milk] = await Promise.all([
+      const [hist, milk, health, breeding] = await Promise.all([
         api.getTimeline(animal.id),
         api.getAnimalMilkHistory(animal.id),
+        api.getHealthCases(animal.id),
+        api.getBreedingRecords(animal.id),
       ]);
       setTimeline(hist);
       setAnimalMilkHistory(milk);
+      setProfileHealth(health || []);
+      setProfileBreeding(breeding || []);
     } catch (err) {
       console.error('Error fetching animal details:', err);
     }
@@ -252,11 +268,11 @@ export const AnimalsPage: React.FC = () => {
   const filteredAnimals = animals.filter(a => {
     const q = searchTerm.toLowerCase();
     return (
-      a.id.toLowerCase().includes(q) ||
-      (a.cowNumber && a.cowNumber.toLowerCase().includes(q)) ||
-      (a.tag1 && a.tag1.toLowerCase().includes(q)) ||
-      (a.tag2 && a.tag2.toLowerCase().includes(q)) ||
-      (a.breed && a.breed.toLowerCase().includes(q))
+      (a.id && String(a.id).toLowerCase().includes(q)) ||
+      (a.cowNumber && String(a.cowNumber).toLowerCase().includes(q)) ||
+      (a.tag1 && String(a.tag1).toLowerCase().includes(q)) ||
+      (a.tag2 && String(a.tag2).toLowerCase().includes(q)) ||
+      (a.breed && String(a.breed).toLowerCase().includes(q))
     );
   });
 
@@ -353,7 +369,7 @@ export const AnimalsPage: React.FC = () => {
                     className="rounded text-emerald-600"
                   />
                 </th>
-                <th className="p-3">Animal ID</th>
+                <th className="p-3">Tag Number</th>
                 <th className="p-3">Breed</th>
                 <th className="p-3">Calculated Age</th>
                 <th className="p-3">Stage</th>
@@ -406,9 +422,6 @@ export const AnimalsPage: React.FC = () => {
                           )}
                           <div>
                             <span className="font-extrabold text-stone-900 block">{animal.id}</span>
-                            {animal.tag1 && (
-                              <span className="text-[10px] text-stone-400">{animal.tag1}</span>
-                            )}
                           </div>
                         </div>
                       </td>
@@ -535,193 +548,115 @@ export const AnimalsPage: React.FC = () => {
           </>
         }
       >
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 text-xs">
+        <div className="grid grid-cols-1 gap-3.5 text-xs">
           <div>
             <label className="block text-stone-600 font-semibold mb-1">
-              Internal Animal ID / Cow Number *
+              Tag Number *
             </label>
             <input
               type="text"
-              placeholder="e.g. C-001"
+              placeholder="e.g. TAG-001"
               value={formData.id}
               disabled={Boolean(editingAnimal)}
               onChange={e => setFormData({ ...formData, id: e.target.value })}
-              className="w-full px-3 py-1.5 border border-stone-200 rounded-lg bg-stone-50 disabled:bg-stone-100"
+              className="w-full px-3 py-2 border-2 border-stone-300 rounded-lg bg-stone-50 disabled:bg-stone-100 text-sm font-bold focus:border-emerald-500 focus:outline-none"
             />
           </div>
 
           <div>
-            <label className="block text-stone-600 font-semibold mb-1">Date of Birth (DOB) *</label>
+            <label className="block text-stone-600 font-semibold mb-1">
+              Date of Birth / Age *
+            </label>
             <input
               type="date"
               value={formData.dob}
               onChange={e => setFormData({ ...formData, dob: e.target.value })}
-              className="w-full px-3 py-1.5 border border-stone-200 rounded-lg bg-white"
+              className="w-full px-3 py-2 border-2 border-stone-300 rounded-lg focus:border-emerald-500 focus:outline-none"
             />
           </div>
 
           <div>
-            <label className="block text-stone-600 font-semibold mb-1">Tag Number 1 (Ear Tag)</label>
-            <input
-              type="text"
-              placeholder="e.g. TAG-001"
-              value={formData.tag1}
-              onChange={e => setFormData({ ...formData, tag1: e.target.value })}
-              className="w-full px-3 py-1.5 border border-stone-200 rounded-lg"
-            />
-          </div>
-
-          <div>
-            <label className="block text-stone-600 font-semibold mb-1">Tag Number 2 (Secondary)</label>
-            <input
-              type="text"
-              placeholder="e.g. EAR-001"
-              value={formData.tag2}
-              onChange={e => setFormData({ ...formData, tag2: e.target.value })}
-              className="w-full px-3 py-1.5 border border-stone-200 rounded-lg"
-            />
-          </div>
-
-          <div>
-            <label className="block text-stone-600 font-semibold mb-1">Breed</label>
-            <input
-              type="text"
-              placeholder="e.g. Friesian Cross, Jersey"
-              value={formData.breed}
-              onChange={e => setFormData({ ...formData, breed: e.target.value })}
-              className="w-full px-3 py-1.5 border border-stone-200 rounded-lg"
-            />
-          </div>
-
-          <div>
-            <label className="block text-stone-600 font-semibold mb-1">Manual Farm Group</label>
-            <select
-              value={formData.group}
-              onChange={e => setFormData({ ...formData, group: e.target.value })}
-              className="w-full px-3 py-1.5 border border-stone-200 rounded-lg bg-white"
-            >
-              {groups.map(g => (
-                <option key={g} value={g}>
-                  {g}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div>
-            <label className="block text-stone-600 font-semibold mb-1">Life Stage</label>
-            <select
-              value={formData.stage}
-              onChange={e => setFormData({ ...formData, stage: e.target.value as any })}
-              className="w-full px-3 py-1.5 border border-stone-200 rounded-lg bg-white"
-            >
-              <option value="Calf">Calf</option>
-              <option value="Heifer">Heifer</option>
-              <option value="Adult">Adult</option>
-            </select>
-          </div>
-
-          <div>
-            <label className="block text-stone-600 font-semibold mb-1">Reproductive Status</label>
-            <select
-              value={formData.reproStatus}
-              onChange={e => setFormData({ ...formData, reproStatus: e.target.value as any })}
-              className="w-full px-3 py-1.5 border border-stone-200 rounded-lg bg-white"
-            >
-              <option value="Pregnant">Pregnant</option>
-              <option value="Milking">Milking</option>
-              <option value="Repeat">Repeat</option>
-              <option value="Nil">Nil</option>
-              <option value="Pending">Pending</option>
-            </select>
-          </div>
-
-          <div>
-            <label className="block text-stone-600 font-semibold mb-1">Milk Status</label>
-            <select
-              value={formData.milkStatus}
-              onChange={e => setFormData({ ...formData, milkStatus: e.target.value as any })}
-              className="w-full px-3 py-1.5 border border-stone-200 rounded-lg bg-white"
-            >
-              <option value="Milking">Milking</option>
-              <option value="Dry">Dry</option>
-              <option value="Not Milking">Not Milking</option>
-            </select>
-          </div>
-
-          <div>
-            <label className="block text-stone-600 font-semibold mb-1">Status</label>
-            <select
-              value={formData.status}
-              onChange={e => setFormData({ ...formData, status: e.target.value as any })}
-              className="w-full px-3 py-1.5 border border-stone-200 rounded-lg bg-white"
-            >
-              <option value="Active">Active</option>
-              <option value="Sold">Sold</option>
-              <option value="Deceased">Deceased</option>
-              <option value="Archived">Archived</option>
-            </select>
-          </div>
-
-          <div>
-            <label className="block text-stone-600 font-semibold mb-1">Purchase Date</label>
-            <input
-              type="date"
-              value={formData.purchaseDate}
-              onChange={e => setFormData({ ...formData, purchaseDate: e.target.value })}
-              className="w-full px-3 py-1.5 border border-stone-200 rounded-lg"
-            />
-          </div>
-
-          <div>
-            <label className="block text-stone-600 font-semibold mb-1">Purchase Price (Rs.)</label>
-            <input
-              type="number"
-              placeholder="0"
-              value={formData.purchasePrice}
-              onChange={e => setFormData({ ...formData, purchasePrice: e.target.value })}
-              className="w-full px-3 py-1.5 border border-stone-200 rounded-lg"
-            />
-          </div>
-
-          <div>
-            <label className="block text-stone-600 font-semibold mb-1">Supplier / Origin</label>
-            <input
-              type="text"
-              placeholder="Farm or Market"
-              value={formData.supplier}
-              onChange={e => setFormData({ ...formData, supplier: e.target.value })}
-              className="w-full px-3 py-1.5 border border-stone-200 rounded-lg"
-            />
-          </div>
-
-          <div>
-            <label className="block text-stone-600 font-semibold mb-1">Animal Photo</label>
-            <div className="flex items-center gap-3">
-              <label className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-stone-100 hover:bg-stone-200 border border-stone-300 rounded-lg cursor-pointer text-xs font-medium">
-                <Camera className="w-3.5 h-3.5 text-stone-600" />
-                <span>Upload</span>
-                <input type="file" accept="image/*" onChange={handlePhotoUpload} className="hidden" />
-              </label>
-              {formData.photoUrl && (
-                <img
-                  src={formData.photoUrl}
-                  alt="Preview"
-                  className="w-9 h-9 rounded-lg object-cover border border-stone-200"
+            <label className="block text-stone-600 font-semibold mb-1">
+              Origin (Kahan paida hui?)
+            </label>
+            <div className="flex gap-4">
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input 
+                  type="radio" 
+                  name="origin" 
+                  checked={formData.originType === 'Farm Born'} 
+                  onChange={() => setFormData({...formData, originType: 'Farm Born'})} 
+                  className="w-4 h-4 text-emerald-600"
                 />
-              )}
+                <span className="font-medium text-stone-700">Born on Farm</span>
+              </label>
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input 
+                  type="radio" 
+                  name="origin" 
+                  checked={formData.originType === 'Purchased'} 
+                  onChange={() => setFormData({...formData, originType: 'Purchased'})} 
+                  className="w-4 h-4 text-emerald-600"
+                />
+                <span className="font-medium text-stone-700">Purchased (Kharidi gai)</span>
+              </label>
             </div>
           </div>
 
-          <div className="sm:col-span-2">
-            <label className="block text-stone-600 font-semibold mb-1">Notes</label>
-            <textarea
-              rows={2}
-              placeholder="Health traits, special feeding, production history..."
-              value={formData.notes}
-              onChange={e => setFormData({ ...formData, notes: e.target.value })}
-              className="w-full px-3 py-1.5 border border-stone-200 rounded-lg"
-            />
+          {formData.originType === 'Purchased' && (
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-stone-600 font-semibold mb-1">Seller / Supplier Name</label>
+                <input
+                  type="text"
+                  value={formData.supplier}
+                  onChange={e => setFormData({ ...formData, supplier: e.target.value })}
+                  className="w-full px-3 py-2 border-2 border-stone-300 rounded-lg focus:border-emerald-500 focus:outline-none"
+                />
+              </div>
+              <div>
+                <label className="block text-stone-600 font-semibold mb-1">Purchase Price (Rs)</label>
+                <input
+                  type="number"
+                  value={formData.purchasePrice}
+                  onChange={e => setFormData({ ...formData, purchasePrice: e.target.value })}
+                  className="w-full px-3 py-2 border-2 border-stone-300 rounded-lg focus:border-emerald-500 focus:outline-none"
+                />
+              </div>
+            </div>
+          )}
+
+          <div>
+            <label className="block text-stone-600 font-semibold mb-1">
+              Current State (Ye cow abhi kis category me hai?) *
+            </label>
+            <select
+              value={formData.simpleState}
+              onChange={e => setFormData({ ...formData, simpleState: e.target.value })}
+              className="w-full px-3 py-2 border-2 border-stone-300 rounded-lg bg-white font-semibold text-stone-700 focus:border-emerald-500 focus:outline-none"
+            >
+              <option value="Calf">Calf (Bachi / Choti hai)</option>
+              <option value="Heifer">Heifer (Nai gai - ready for breeding)</option>
+              <option value="Milking">Milking (Doodh de rahi hai)</option>
+              <option value="Pregnant">Pregnant (Gabban / Dry)</option>
+              <option value="Dry">Dry (Doodh sookh gaya / Open)</option>
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-stone-600 font-semibold mb-1">
+              Group (Feeding Group / Bada) *
+            </label>
+            <select
+              value={formData.group}
+              onChange={e => setFormData({ ...formData, group: e.target.value })}
+              className="w-full px-3 py-2 border-2 border-stone-300 rounded-lg bg-white font-semibold text-stone-700 focus:border-emerald-500 focus:outline-none"
+            >
+              {groups.map(g => (
+                <option key={g} value={g}>{g}</option>
+              ))}
+            </select>
+            <p className="mt-1 text-[10px] text-stone-500">Naye groups banane ke liye Settings me jayen.</p>
           </div>
         </div>
       </Modal>
@@ -766,6 +701,84 @@ export const AnimalsPage: React.FC = () => {
                     Milk: {selectedAnimalProfile.milkStatus}
                   </span>
                 </div>
+              </div>
+            </div>
+
+            {/* Milk Production Chart */}
+            {animalMilkHistory.length > 0 && (() => {
+              const last14 = animalMilkHistory.slice(-14);
+              const maxVal = Math.max(...last14.map((m: any) => m.litres || 0), 1);
+              return (
+                <div className="space-y-2">
+                  <h4 className="font-bold text-stone-800">📊 Milk Production Chart (Last 14 Days)</h4>
+                  <div className="bg-stone-50 rounded-xl border border-stone-200 p-3">
+                    <div className="flex items-end gap-1 h-24">
+                      {last14.map((m: any, i: number) => {
+                        const pct = ((m.litres || 0) / maxVal) * 100;
+                        return (
+                          <div key={i} className="flex-1 flex flex-col items-center gap-0.5 group relative">
+                            <div
+                              className="absolute -top-6 opacity-0 group-hover:opacity-100 bg-stone-800 text-white text-[9px] px-1.5 py-0.5 rounded whitespace-nowrap z-10 pointer-events-none transition-opacity"
+                            >
+                              {m.litres}L
+                            </div>
+                            <div
+                              className="w-full rounded-t bg-emerald-400 group-hover:bg-emerald-500 transition-colors"
+                              style={{ height: `${Math.max(pct, 4)}%` }}
+                            />
+                            <span className="text-[8px] text-stone-400 rotate-45 origin-left mt-0.5">{(m.date || '').slice(5)}</span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                    <div className="flex justify-between text-[9px] text-stone-400 mt-1">
+                      <span>0 L</span>
+                      <span>{maxVal} L (peak)</span>
+                    </div>
+                  </div>
+                </div>
+              );
+            })()}
+
+            {/* Health & Breeding side by side */}
+            <div className="grid sm:grid-cols-2 gap-3">
+              <div className="space-y-2">
+                <h4 className="font-bold text-stone-800">❤️ Medical History</h4>
+                {profileHealth.length === 0 ? (
+                  <div className="p-3 text-center text-stone-400 bg-stone-50 rounded-lg">No medical records.</div>
+                ) : (
+                  <div className="space-y-1.5 max-h-36 overflow-y-auto">
+                    {profileHealth.map((hc: any, i: number) => (
+                      <div key={i} className="p-2 bg-rose-50 border border-rose-100 rounded-lg">
+                        <div className="flex justify-between font-bold text-stone-700">
+                          <span>{hc.diagnosis}</span>
+                          <span className="text-stone-400">{hc.date}</span>
+                        </div>
+                        <div className="text-stone-500 text-[10px] mt-0.5">{hc.treatment || 'No treatment details'}</div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+              <div className="space-y-2">
+                <h4 className="font-bold text-stone-800">🔬 Breeding Records</h4>
+                {profileBreeding.length === 0 ? (
+                  <div className="p-3 text-center text-stone-400 bg-stone-50 rounded-lg">No breeding events.</div>
+                ) : (
+                  <div className="space-y-1.5 max-h-36 overflow-y-auto">
+                    {profileBreeding.map((br: any, i: number) => (
+                      <div key={i} className="p-2 bg-purple-50 border border-purple-100 rounded-lg">
+                        <div className="flex justify-between font-bold text-stone-700">
+                          <span>{br.type}</span>
+                          <span className="text-stone-400">{br.date}</span>
+                        </div>
+                        <div className="text-stone-500 text-[10px] mt-0.5">
+                          {br.isSuccessful ? '✅ Successful' : br.isSuccessful === false ? '❌ Failed' : '⏳ Pending'}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
 

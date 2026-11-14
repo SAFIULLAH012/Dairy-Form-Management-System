@@ -1,9 +1,8 @@
 /**
  * Platform Adapters Factory & Registry for Dairy Farm ERP
- * Automatically selects the appropriate adapter (Web vs Android) at runtime.
+ * Tailored for Windows Laptop / Desktop (Electron) and Web environment.
  */
 
-import { Capacitor } from '@capacitor/core';
 import { PlatformAdapters } from './interfaces.ts';
 import {
   WebDatabaseAdapter,
@@ -13,14 +12,6 @@ import {
   WebBackupAdapter,
   WebShareAdapter,
 } from './web/WebAdapters.ts';
-import {
-  AndroidDatabaseAdapter,
-  AndroidNotificationAdapter,
-  AndroidFileStorageAdapter,
-  AndroidCameraAdapter,
-  AndroidBackupAdapter,
-  AndroidShareAdapter,
-} from './android/AndroidAdapters.ts';
 
 let activeAdapters: PlatformAdapters | null = null;
 
@@ -29,32 +20,22 @@ export function getPlatformAdapters(): PlatformAdapters {
     return activeAdapters;
   }
 
-  const isNative = Capacitor.isNativePlatform();
-  const platform = Capacitor.getPlatform() as 'web' | 'android' | 'ios';
+  // Detect whether running in Electron desktop environment or standard browser
+  const isElectron =
+    typeof window !== 'undefined' &&
+    (window.navigator.userAgent.toLowerCase().includes('electron') ||
+      (window as any).process?.versions?.electron !== undefined);
 
-  if (isNative && platform === 'android') {
-    activeAdapters = {
-      db: new AndroidDatabaseAdapter(),
-      notifications: new AndroidNotificationAdapter(),
-      storage: new AndroidFileStorageAdapter(),
-      camera: new AndroidCameraAdapter(),
-      backup: new AndroidBackupAdapter(),
-      share: new AndroidShareAdapter(),
-      isNative: true,
-      platform: 'android',
-    };
-  } else {
-    activeAdapters = {
-      db: new WebDatabaseAdapter(),
-      notifications: new WebNotificationAdapter(),
-      storage: new WebFileStorageAdapter(),
-      camera: new WebCameraAdapter(),
-      backup: new WebBackupAdapter(),
-      share: new WebShareAdapter(),
-      isNative: false,
-      platform: 'web',
-    };
-  }
+  activeAdapters = {
+    db: new WebDatabaseAdapter(),
+    notifications: new WebNotificationAdapter(),
+    storage: new WebFileStorageAdapter(),
+    camera: new WebCameraAdapter(),
+    backup: new WebBackupAdapter(),
+    share: new WebShareAdapter(),
+    isNative: false,
+    platform: isElectron ? 'desktop' : 'web',
+  };
 
   return activeAdapters;
 }

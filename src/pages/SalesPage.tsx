@@ -20,7 +20,7 @@ export const SalesPage: React.FC = () => {
     receiverName: 'Ahmed',
     date: new Date().toISOString().slice(0, 10),
     time: new Date().toTimeString().slice(0, 5),
-    litres: '320',
+    litres: '',
     fatPercent: '4.10',
     snfPercent: '8.55',
     ratePerL: '210',
@@ -41,9 +41,17 @@ export const SalesPage: React.FC = () => {
   const loadData = async () => {
     try {
       setLoading(true);
-      const [invList, custList] = await Promise.all([api.getDeliveries(), api.getCustomers()]);
+      const today = new Date().toISOString().slice(0, 10);
+      const [invList,custList, milkEntries] = await Promise.all([
+        api.getDeliveries(),
+        api.getCustomers(),
+        api.getMilkTotals(today, today)
+      ]);
       setInvoices(invList);
       setCustomers(custList);
+      
+      const todaysMilk = milkEntries.reduce((sum: number, entry: any) => sum + (entry.actualLitres || 0), 0);
+      
       if (custList.length > 0 && !invoiceForm.customerId) {
         setInvoiceForm(prev => ({
           ...prev,
@@ -51,6 +59,7 @@ export const SalesPage: React.FC = () => {
           customerName: custList[0].name,
           ratePerL: String(custList[0].defaultRatePerL || 210),
           paymentTermsDays: String(custList[0].paymentTermsDays || 7),
+          litres: todaysMilk > 0 ? String(todaysMilk) : '',
         }));
       }
     } catch (err) {
@@ -140,7 +149,7 @@ export const SalesPage: React.FC = () => {
                 customerName: customers[0].name,
                 ratePerL: String(customers[0].defaultRatePerL || 210),
                 paymentTermsDays: String(customers[0].paymentTermsDays || 7),
-                litres: '',
+
                 initialPaidAmount: '0',
                 notes: '',
               }));

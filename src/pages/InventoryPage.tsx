@@ -10,6 +10,15 @@ export const InventoryPage: React.FC = () => {
   const [selectedItemHistory, setSelectedItemHistory] = useState<any | null>(null);
   const [historyRows, setHistoryRows] = useState<any[]>([]);
 
+  // Add Item Form
+  const [showAddItemModal, setShowAddItemModal] = useState(false);
+  const [itemForm, setItemForm] = useState({
+    name: '',
+    category: 'FEED' as 'FEED' | 'MEDICINE' | 'VACCINE' | 'SUPPLY' | 'OTHER',
+    unit: 'KG' as 'KG' | 'MAUND' | 'VIAL' | 'LITRE' | 'DOSE' | 'ITEM',
+    minStockThreshold: '100',
+  });
+
   // Movement Form
   const [txForm, setTxForm] = useState({
     itemId: '',
@@ -64,6 +73,28 @@ export const InventoryPage: React.FC = () => {
     }
   };
 
+  const handleSaveItem = async () => {
+    if (!itemForm.name.trim()) {
+      alert('Please enter an item name.');
+      return;
+    }
+    try {
+      await api.createInventoryItem({
+        id: `INV_${Date.now()}`,
+        name: itemForm.name,
+        category: itemForm.category,
+        unit: itemForm.unit,
+        minStockThreshold: parseFloat(itemForm.minStockThreshold || '0'),
+        currentStock: 0,
+      });
+      setShowAddItemModal(false);
+      setItemForm({ name: '', category: 'FEED', unit: 'KG', minStockThreshold: '100' });
+      loadData();
+    } catch (err: any) {
+      alert(err.message || 'Error creating inventory item');
+    }
+  };
+
   const handleViewHistory = async (item: any) => {
     setSelectedItemHistory(item);
     try {
@@ -84,24 +115,33 @@ export const InventoryPage: React.FC = () => {
           <span>Farm Supplies & Feed Stock</span>
         </div>
 
-        <button
-          onClick={() => {
-            setTxForm({
-              itemId: items[0]?.id || '',
-              date: new Date().toISOString().slice(0, 10),
-              type: 'STOCK_IN',
-              quantity: '',
-              unitCost: '',
-              reference: '',
-              notes: '',
-            });
-            setShowTransactionModal(true);
-          }}
-          className="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-bold text-white bg-[#16734b] hover:bg-[#125e3d] rounded-lg shadow-xs transition-colors cursor-pointer"
-        >
-          <Plus className="w-4 h-4" />
-          <span>New Stock Movement</span>
-        </button>
+        <div className="flex gap-2">
+          <button
+            onClick={() => setShowAddItemModal(true)}
+            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-bold text-stone-700 bg-stone-100 hover:bg-stone-200 rounded-lg shadow-xs transition-colors cursor-pointer"
+          >
+            <Plus className="w-4 h-4" />
+            <span>Add New Item</span>
+          </button>
+          <button
+            onClick={() => {
+              setTxForm({
+                itemId: items[0]?.id || '',
+                date: new Date().toISOString().slice(0, 10),
+                type: 'STOCK_IN',
+                quantity: '',
+                unitCost: '',
+                reference: '',
+                notes: '',
+              });
+              setShowTransactionModal(true);
+            }}
+            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-bold text-white bg-[#16734b] hover:bg-[#125e3d] rounded-lg shadow-xs transition-colors cursor-pointer"
+          >
+            <Plus className="w-4 h-4" />
+            <span>New Stock Movement</span>
+          </button>
+        </div>
       </div>
 
       {/* Items Table */}
@@ -347,6 +387,86 @@ export const InventoryPage: React.FC = () => {
                 )}
               </tbody>
             </table>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Add Item Modal */}
+      <Modal
+        title="Add New Inventory Item"
+        isOpen={showAddItemModal}
+        onClose={() => setShowAddItemModal(false)}
+        footer={
+          <>
+            <button
+              onClick={() => setShowAddItemModal(false)}
+              className="px-4 py-2 text-xs font-semibold text-stone-600 hover:bg-stone-100 rounded-lg cursor-pointer"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleSaveItem}
+              className="px-4 py-2 text-xs font-bold text-white bg-[#16734b] hover:bg-[#125e3d] rounded-lg cursor-pointer"
+            >
+              Save Item
+            </button>
+          </>
+        }
+      >
+        <div className="space-y-3 text-xs">
+          <div>
+            <label className="block text-stone-600 font-semibold mb-1">Item Name *</label>
+            <input
+              type="text"
+              placeholder="e.g. Silage, Wanda 13%"
+              value={itemForm.name}
+              onChange={e => setItemForm({ ...itemForm, name: e.target.value })}
+              className="w-full px-3 py-1.5 border border-stone-200 rounded-lg"
+            />
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-stone-600 font-semibold mb-1">Category *</label>
+              <select
+                value={itemForm.category}
+                onChange={e => setItemForm({ ...itemForm, category: e.target.value as any })}
+                className="w-full px-3 py-1.5 border border-stone-200 rounded-lg bg-white"
+              >
+                <option value="FEED">Feed</option>
+                <option value="MEDICINE">Medicine</option>
+                <option value="VACCINE">Vaccine</option>
+                <option value="SUPPLY">Supply</option>
+                <option value="OTHER">Other</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-stone-600 font-semibold mb-1">Unit *</label>
+              <select
+                value={itemForm.unit}
+                onChange={e => setItemForm({ ...itemForm, unit: e.target.value as any })}
+                className="w-full px-3 py-1.5 border border-stone-200 rounded-lg bg-white"
+              >
+                <option value="KG">KG</option>
+                <option value="MAUND">Maund</option>
+                <option value="VIAL">Vial</option>
+                <option value="LITRE">Litre</option>
+                <option value="DOSE">Dose</option>
+                <option value="ITEM">Item</option>
+              </select>
+            </div>
+          </div>
+          <div>
+            <label className="block text-stone-600 font-semibold mb-1">Min Stock Alert Threshold</label>
+            <input
+              type="number"
+              min="0"
+              value={itemForm.minStockThreshold}
+              onChange={e => setItemForm({ ...itemForm, minStockThreshold: e.target.value })}
+              className="w-full px-3 py-1.5 border border-stone-200 rounded-lg"
+            />
+            <span className="text-[10px] text-stone-500 mt-1 block">
+              You will be alerted when stock falls below this amount.
+            </span>
           </div>
         </div>
       </Modal>

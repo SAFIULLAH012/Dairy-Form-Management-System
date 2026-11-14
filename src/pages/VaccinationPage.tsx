@@ -182,12 +182,14 @@ export const VaccinationPage: React.FC = () => {
       >
         <div className="space-y-3 text-xs">
           <div className="grid grid-cols-2 gap-3">
-<AnimalSearchInput
-  animals={cows}
-  value={formData.animalId}
-  onChange={(id) => setFormData({ ...formData, animalId: id })}
-  placeholder="Select animal..."
-/>
+            <div>
+              <label className="block text-stone-600 font-semibold mb-1">Animal *</label>
+              <AnimalSearchInput
+                animals={cows}
+                value={formData.animalId}
+                onChange={(id) => setFormData({ ...formData, animalId: id })}
+                placeholder="Select animal..."
+              />
             </div>
             <div>
               <label className="block text-stone-600 font-semibold mb-1">Vaccine / Disease *</label>

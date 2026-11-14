@@ -25,6 +25,13 @@ export class ReportService {
     const payments = await this.paymentRepo.listAll(fromDate, toDate);
     const expenses = await this.expenseRepo.listExpenses({ fromDate, toDate });
 
+    // Fetch animals sold within the report period
+    const allAnimals = await this.animalRepo.listAll({ status: 'Sold' });
+    const soldInPeriod = allAnimals.filter(a =>
+      a.saleDate && a.saleDate >= fromDate && a.saleDate <= toDate
+    );
+    const totalAnimalSalesRevenue = soldInPeriod.reduce((s, a) => s + (a.salePrice || 0), 0);
+
     // Sum calculations
     const totalMilkLitres = milkTotals.reduce((s, m) => s + m.totalLitres, 0);
     const totalMilkSales = invoices.reduce((s, i) => s + i.totalAmount, 0);
@@ -33,7 +40,8 @@ export class ReportService {
     const totalFeedCost = feedTxs.reduce((s, f) => s + f.totalCost, 0);
     const totalExpenses = expenses.reduce((s, e) => s + e.amount, 0);
 
-    const totalIncome = totalMilkSales;
+    // Total income now includes milk sales + animal sale revenue
+    const totalIncome = totalMilkSales + totalAnimalSalesRevenue;
     const totalCosts = totalFeedCost + totalExpenses;
     const netProfitOrLoss = Number((totalIncome - totalCosts).toFixed(2));
 
@@ -62,12 +70,21 @@ export class ReportService {
         totalMilkLitres: Number(totalMilkLitres.toFixed(1)),
         totalMilkDeliveredLitres: Number(totalMilkDeliveredLitres.toFixed(1)),
         totalMilkSales: Number(totalMilkSales.toFixed(2)),
+        totalAnimalSalesRevenue: Number(totalAnimalSalesRevenue.toFixed(2)),
+        totalIncome: Number(totalIncome.toFixed(2)),
         totalCashReceived: Number(totalCashReceived.toFixed(2)),
         totalFeedCost: Number(totalFeedCost.toFixed(2)),
         totalExpenses: Number(totalExpenses.toFixed(2)),
         totalCosts: Number(totalCosts.toFixed(2)),
         netProfitOrLoss,
       },
+      soldAnimals: soldInPeriod.map(a => ({
+        id: a.id,
+        saleDate: a.saleDate,
+        salePrice: a.salePrice,
+        buyer: a.buyer,
+        breed: a.breed,
+      })),
       reconciliation,
       expensesByCategory,
       dailyTrend,

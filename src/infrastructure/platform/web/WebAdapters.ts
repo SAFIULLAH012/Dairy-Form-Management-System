@@ -46,10 +46,6 @@ export class WebDatabaseAdapter implements IDatabaseAdapter {
     if (savedData) {
       try {
         this.db = new SQL.Database(savedData);
-        const count = this.get<{ count: number }>('SELECT count(*) as count FROM animals')?.count || 0;
-        if (count < 100) {
-          this.run('DELETE FROM schema_migrations WHERE version >= 5');
-        }
       } catch {
         this.db = new SQL.Database();
       }

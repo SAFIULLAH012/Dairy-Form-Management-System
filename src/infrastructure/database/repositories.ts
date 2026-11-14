@@ -484,14 +484,15 @@ export class SQLiteFeedRepository implements IFeedRepository {
       totalCost: r.total_cost,
       supplier: r.supplier,
       notes: r.notes,
+      cowCount: r.cow_count,
       createdAt: r.created_at,
     }));
   }
 
   async createTransaction(tx: FeedTransaction): Promise<FeedTransaction> {
     this.db.run(
-      `INSERT INTO feed_transactions (id, date, group_name, feed_type, maund, kg, price_per_kg, total_cost, supplier, notes, created_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO feed_transactions (id, date, group_name, feed_type, maund, kg, price_per_kg, total_cost, supplier, notes, cow_count, created_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         tx.id,
         tx.date,
@@ -503,6 +504,7 @@ export class SQLiteFeedRepository implements IFeedRepository {
         tx.totalCost,
         tx.supplier,
         tx.notes,
+        tx.cowCount || 0,
         tx.createdAt,
       ]
     );

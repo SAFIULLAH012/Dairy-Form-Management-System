@@ -5,6 +5,7 @@ import { QuickAddModal } from './components/QuickAddModal.tsx';
 import { DashboardPage } from './pages/DashboardPage.tsx';
 import { AnimalsPage } from './pages/AnimalsPage.tsx';
 import { MaleAnimalsPage } from './pages/MaleAnimalsPage.tsx';
+import { CowProfilesPage } from './pages/CowProfilesPage.tsx';
 import { MilkPage } from './pages/MilkPage.tsx';
 import { SalesPage } from './pages/SalesPage.tsx';
 import { CustomersPage } from './pages/CustomersPage.tsx';
@@ -18,6 +19,7 @@ import { WorkersPage } from './pages/WorkersPage.tsx';
 import { ExpensesPage } from './pages/ExpensesPage.tsx';
 import { ReportsPage } from './pages/ReportsPage.tsx';
 import { SettingsPage } from './pages/SettingsPage.tsx';
+import { ErrorBoundary } from './components/ErrorBoundary.tsx';
 import { api } from './client/api.ts';
 
 export default function App() {
@@ -45,6 +47,7 @@ export default function App() {
     dashboard: 'Farm Dashboard',
     animals: 'Female Herd Management',
     male: 'Male Animals',
+    cowprofiles: '🐄 All Cow Profiles – Visual Grid',
     milk: 'Daily Milk Production',
     deliveries: 'Milk Sales & Invoices',
     customers: 'Customers & Receivables',
@@ -87,29 +90,32 @@ export default function App() {
 
         {/* Content body */}
         <main className="flex-1 p-4 lg:p-6 overflow-x-hidden">
-          {currentTab === 'dashboard' && (
-            <DashboardPage
-              onNavigate={tab => setCurrentTab(tab)}
-              onOpenQuickAdd={() => setIsQuickAddOpen(true)}
-            />
-          )}
-          {currentTab === 'animals' && <AnimalsPage />}
-          {currentTab === 'male' && <MaleAnimalsPage />}
-          {currentTab === 'milk' && <MilkPage />}
-          {currentTab === 'deliveries' && <SalesPage />}
-          {currentTab === 'customers' && <CustomersPage />}
-          {currentTab === 'feed' && <FeedPage />}
-          {currentTab === 'inventory' && <InventoryPage />}
-          {currentTab === 'health' && <HealthPage />}
-          {currentTab === 'vaccination' && <VaccinationPage />}
-          {currentTab === 'breeding' && <BreedingPage />}
-          {currentTab === 'tasks' && (
-            <RemindersPage onNavigateToModule={mod => setCurrentTab(mod)} />
-          )}
-          {currentTab === 'workers' && <WorkersPage />}
-          {currentTab === 'expenses' && <ExpensesPage />}
-          {currentTab === 'reports' && <ReportsPage />}
-          {currentTab === 'settings' && <SettingsPage />}
+          <ErrorBoundary>
+            {currentTab === 'dashboard' && (
+              <DashboardPage
+                onNavigate={tab => setCurrentTab(tab)}
+                onOpenQuickAdd={() => setIsQuickAddOpen(true)}
+              />
+            )}
+            {currentTab === 'animals' && <AnimalsPage />}
+            {currentTab === 'male' && <MaleAnimalsPage />}
+            {currentTab === 'cowprofiles' && <CowProfilesPage />}
+            {currentTab === 'milk' && <MilkPage />}
+            {currentTab === 'deliveries' && <SalesPage />}
+            {currentTab === 'customers' && <CustomersPage />}
+            {currentTab === 'feed' && <FeedPage />}
+            {currentTab === 'inventory' && <InventoryPage />}
+            {currentTab === 'health' && <HealthPage />}
+            {currentTab === 'vaccination' && <VaccinationPage />}
+            {currentTab === 'breeding' && <BreedingPage />}
+            {currentTab === 'tasks' && (
+              <RemindersPage onNavigateToModule={mod => setCurrentTab(mod)} />
+            )}
+            {currentTab === 'workers' && <WorkersPage />}
+            {currentTab === 'expenses' && <ExpensesPage />}
+            {currentTab === 'reports' && <ReportsPage />}
+            {currentTab === 'settings' && <SettingsPage />}
+          </ErrorBoundary>
         </main>
       </div>
 

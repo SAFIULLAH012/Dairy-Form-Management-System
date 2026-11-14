@@ -379,7 +379,7 @@ export const migrations: Migration[] = [
         );
       `);
 
-      // Seed default settings so getSettings() never throws on a fresh Android install
+      // Seed default settings so getSettings() never throws on a fresh install
       const seedNow = new Date().toISOString();
       db.run(
         `INSERT OR IGNORE INTO farm_settings (
@@ -470,6 +470,18 @@ export const migrations: Migration[] = [
         );
         CREATE INDEX IF NOT EXISTS idx_milk_corr_date ON milk_corrections_audit(date, shift);
       `);
+    },
+  },
+  {
+    version: 4,
+    name: '004_feed_cow_count',
+    up: (db: IDatabaseAdapter) => {
+      // Catch error in case it already exists somehow, or just try to add column
+      try {
+        db.exec(`ALTER TABLE feed_transactions ADD COLUMN cow_count INTEGER DEFAULT 0;`);
+      } catch (err) {
+        console.log('Column cow_count may already exist');
+      }
     },
   },
 ];

@@ -1,14 +1,14 @@
 /**
  * Performance Benchmark Test for Dairy Farm ERP
  * Uses in-process SQL.js (no Express, no network) to test domain-layer performance.
- * Architecture: same as Android Native Mode (LocalAppService → SQLiteRepositories → sql.js in-memory)
+ * Architecture: Desktop In-Process Mode (LocalAppService → SQLiteRepositories → sql.js in-memory)
  */
 import { LocalAppService } from '../src/domain/services/LocalAppService.ts';
 import initSqlJs from 'sql.js';
 import { WebDatabaseAdapter } from '../src/infrastructure/platform/web/WebAdapters.ts';
 
-// A Node.js compatible DB adapter (no browser localStorage, no Capacitor)
-// Mirrors how AndroidDatabaseAdapter works: sql.js WASM in memory
+// A Node.js compatible DB adapter (no browser localStorage)
+// sql.js WASM in memory
 class NodeDatabaseAdapter extends WebDatabaseAdapter {
   private _initialized = false;
 
@@ -28,7 +28,7 @@ class NodeDatabaseAdapter extends WebDatabaseAdapter {
 
 async function runBenchmarks() {
   console.log('\n--- DAIRY FARM ERP PERFORMANCE BENCHMARKS ---');
-  console.log('Architecture: sql.js (WASM) in-memory — same as Android Native Mode\n');
+  console.log('Architecture: sql.js (WASM) in-memory Desktop Mode\n');
 
   const dbAdapter = new NodeDatabaseAdapter();
   const storageMock = {

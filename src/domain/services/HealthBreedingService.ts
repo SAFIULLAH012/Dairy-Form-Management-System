@@ -12,6 +12,8 @@ import {
   IAnimalRepository,
   IReminderRepository,
   IAuditRepository,
+  IInventoryRepository,
+  IExpenseRepository,
 } from '../repositories.ts';
 import { calculateBreedingPredictions, addDays } from '../calculations.ts';
 
@@ -23,7 +25,9 @@ export class HealthBreedingService {
     private growthRepo: IGrowthRepository,
     private animalRepo: IAnimalRepository,
     private reminderRepo: IReminderRepository,
-    private auditRepo: IAuditRepository
+    private auditRepo: IAuditRepository,
+    private inventoryRepo: IInventoryRepository,
+    private expenseRepo: IExpenseRepository
   ) {}
 
   // ================= HEALTH =================
@@ -37,6 +41,52 @@ export class HealthBreedingService {
     };
 
     const saved = await this.healthRepo.createCase(healthCase);
+
+    // DEDUCT FROM INVENTORY IF MEDICINE EXISTS
+    if (saved.medicine) {
+      const invItem = await this.inventoryRepo.findItemByName(saved.medicine);
+      if (invItem) {
+        // Assume 1 unit if dose is not purely numeric or not provided
+        const qtyToDeduct = parseFloat(saved.dose || '1') || 1;
+        const newStock = Math.max(0, invItem.currentStock - qtyToDeduct);
+        
+        await this.inventoryRepo.recordTransaction({
+          id: `INV_TX_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`,
+          itemId: invItem.id,
+          itemName: invItem.name,
+          date: saved.date,
+          type: 'STOCK_OUT',
+          quantity: qtyToDeduct,
+          signedQuantity: -qtyToDeduct,
+          unit: invItem.unit,
+          unitCost: 0,
+          totalValue: 0,
+          reference: saved.id,
+          notes: `Used for Health Case ${saved.id} (Animal: ${saved.animalId})`,
+          createdAt: now,
+        });
+
+        await this.inventoryRepo.saveItem({
+          ...invItem,
+          currentStock: Number(newStock.toFixed(2)),
+          updatedAt: now,
+        });
+      }
+    }
+
+    // RECORD EXPENSE IF COST > 0
+    if (saved.cost && saved.cost > 0) {
+      await this.expenseRepo.createExpense({
+        id: `EXP_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`,
+        date: saved.date,
+        category: 'Medicine',
+        amount: saved.cost,
+        paymentMethod: 'Cash',
+        reference: saved.id,
+        notes: `Vet treatment for ${saved.animalId} - ${saved.problem}`,
+        createdAt: now,
+      });
+    }
 
     if (saved.followUpDate && saved.status !== 'Closed' && saved.status !== 'Recovered') {
       await this.reminderRepo.saveTask({
@@ -113,6 +163,20 @@ export class HealthBreedingService {
     };
 
     const saved = await this.vaccineRepo.createRecord(record);
+
+    // AUTO-EXPENSE: If vaccination has a cost, record it in Expenses
+    if (saved.cost && saved.cost > 0) {
+      await this.expenseRepo.createExpense({
+        id: `EXP_VAC_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`,
+        date: saved.lastDate,
+        category: 'Medicine',
+        amount: saved.cost,
+        paymentMethod: 'Cash',
+        reference: saved.id,
+        notes: `Vaccination: ${saved.vaccineType} for ${saved.animalId}${saved.product ? ` (${saved.product})` : ''}`,
+        createdAt: now,
+      });
+    }
 
     if (saved.nextDueDate) {
       await this.reminderRepo.saveTask({

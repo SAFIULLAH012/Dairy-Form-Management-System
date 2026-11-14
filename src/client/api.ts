@@ -1,13 +1,11 @@
 /**
  * Strongly-typed API & Application Client for Dairy Farm ERP
  *
- * Supports Dual Architecture:
- * 1. Android Native Offline Mode: Calls pure domain services in-process backed by local SQLite.
- *    Does NOT require Node.js or Express.
- * 2. Web Client-Server Mode: Calls Express /api/... endpoints with automatic offline fallback.
+ * Windows Desktop / Laptop (Electron) & Web Architecture:
+ * Communicates with the local Express / SQLite backend with seamless
+ * in-browser offline fallback support.
  */
 
-import { Capacitor } from '@capacitor/core';
 import { getPlatformAdapters } from '../infrastructure/platform/index.ts';
 import { LocalAppService } from '../domain/services/LocalAppService.ts';
 
@@ -21,7 +19,7 @@ function getLocalApp(): LocalAppService {
   return localAppInstance;
 }
 
-const isNative = Capacitor.isNativePlatform();
+const isNative = false;
 
 async function fetchJson<T>(url: string, options?: RequestInit): Promise<T> {
   const res = await fetch(url, {
@@ -52,7 +50,6 @@ export const api = {
 
   // --- ANIMALS ---
   async getAnimals(params?: { sex?: 'Female' | 'Male'; status?: string; group?: string }) {
-    if (isNative) return getLocalApp().getAnimals(params);
     try {
       const query = new URLSearchParams(params as any).toString();
       return await fetchJson<any[]>(`/api/animals${query ? `?${query}` : ''}`);
@@ -62,7 +59,6 @@ export const api = {
   },
 
   async getAnimal(id: string) {
-    if (isNative) return getLocalApp().getAnimal(id);
     try {
       return await fetchJson<any>(`/api/animals/${encodeURIComponent(id)}`);
     } catch {
@@ -71,7 +67,6 @@ export const api = {
   },
 
   async createAnimal(data: any) {
-    if (isNative) return getLocalApp().createAnimal(data);
     try {
       return await fetchJson<any>('/api/animals', {
         method: 'POST',
@@ -83,7 +78,6 @@ export const api = {
   },
 
   async updateAnimal(id: string, data: any) {
-    if (isNative) return getLocalApp().updateAnimal(id, data);
     try {
       return await fetchJson<any>(`/api/animals/${encodeURIComponent(id)}`, {
         method: 'PUT',
@@ -95,7 +89,6 @@ export const api = {
   },
 
   async markSold(id: string, data: { saleDate: string; buyer: string; salePrice: number; notes?: string }) {
-    if (isNative) return getLocalApp().markSold(id, data);
     try {
       return await fetchJson<any>(`/api/animals/${encodeURIComponent(id)}/sold`, {
         method: 'POST',
@@ -107,7 +100,6 @@ export const api = {
   },
 
   async markDeceased(id: string, data: { deathDate: string; deathReason: string; notes?: string }) {
-    if (isNative) return getLocalApp().markDeceased(id, data);
     try {
       return await fetchJson<any>(`/api/animals/${encodeURIComponent(id)}/deceased`, {
         method: 'POST',
@@ -119,7 +111,6 @@ export const api = {
   },
 
   async getTimeline(id: string) {
-    if (isNative) return getLocalApp().getTimeline(id);
     try {
       return await fetchJson<any[]>(`/api/animals/${encodeURIComponent(id)}/timeline`);
     } catch {
@@ -128,7 +119,6 @@ export const api = {
   },
 
   async bulkUpdateGroup(animalIds: string[], newGroup: string, reason?: string) {
-    if (isNative) return getLocalApp().bulkUpdateGroup(animalIds, newGroup, reason);
     try {
       return await fetchJson<any>('/api/animals/bulk/group', {
         method: 'POST',
@@ -141,7 +131,6 @@ export const api = {
 
   // --- MILK ---
   async getMilkShifts() {
-    if (isNative) return getLocalApp().getMilkShifts();
     try {
       return await fetchJson<any[]>('/api/milk/shifts');
     } catch {
@@ -150,7 +139,6 @@ export const api = {
   },
 
   async getMilkTotals(fromDate?: string, toDate?: string) {
-    if (isNative) return getLocalApp().getMilkTotals(fromDate, toDate);
     try {
       const query = new URLSearchParams();
       if (fromDate) query.set('fromDate', fromDate);
@@ -162,7 +150,6 @@ export const api = {
   },
 
   async saveMilkTotal(data: any) {
-    if (isNative) return getLocalApp().saveMilkTotal(data);
     try {
       return await fetchJson<any>('/api/milk/total', {
         method: 'POST',
@@ -174,7 +161,6 @@ export const api = {
   },
 
   async unlockMilkShift(date: string, shift: string, reason: string) {
-    if (isNative) return getLocalApp().unlockMilkShift(date, shift, reason);
     try {
       return await fetchJson<any>('/api/milk/unlock', {
         method: 'POST',
@@ -186,7 +172,6 @@ export const api = {
   },
 
   async getMilkIndividual(date: string, shift: string) {
-    if (isNative) return getLocalApp().getMilkIndividual(date, shift);
     try {
       return await fetchJson<any[]>(`/api/milk/individual?date=${date}&shift=${shift}`);
     } catch {
@@ -195,7 +180,6 @@ export const api = {
   },
 
   async saveMilkIndividual(date: string, shift: string, entries: any[]) {
-    if (isNative) return getLocalApp().saveMilkIndividual(date, shift, entries);
     try {
       return await fetchJson<any>('/api/milk/individual', {
         method: 'POST',
@@ -207,7 +191,6 @@ export const api = {
   },
 
   async getAnimalMilkHistory(animalId: string) {
-    if (isNative) return getLocalApp().getAnimalMilkHistory(animalId);
     try {
       return await fetchJson<any[]>(`/api/milk/history/${encodeURIComponent(animalId)}`);
     } catch {
@@ -216,7 +199,6 @@ export const api = {
   },
 
   async recordMilkCorrection(data: any) {
-    if (isNative) return getLocalApp().milkRepo.recordCorrection(data);
     try {
       return await fetchJson<any>('/api/milk/corrections', {
         method: 'POST',
@@ -228,7 +210,6 @@ export const api = {
   },
 
   async getMilkCorrections(date?: string, shift?: string) {
-    if (isNative) return getLocalApp().milkRepo.listCorrections(date, shift);
     try {
       const q = new URLSearchParams();
       if (date) q.set('date', date);
@@ -241,7 +222,6 @@ export const api = {
 
   // --- FEED & INVENTORY ---
   async getFeedTransactions(fromDate?: string, toDate?: string, group?: string) {
-    if (isNative) return getLocalApp().getFeedTransactions(fromDate, toDate, group);
     try {
       const query = new URLSearchParams();
       if (fromDate) query.set('fromDate', fromDate);
@@ -254,7 +234,6 @@ export const api = {
   },
 
   async recordFeed(data: any) {
-    if (isNative) return getLocalApp().recordFeed(data);
     try {
       return await fetchJson<any>('/api/feed/transactions', {
         method: 'POST',
@@ -266,7 +245,6 @@ export const api = {
   },
 
   async getInventoryItems() {
-    if (isNative) return getLocalApp().getInventoryItems();
     try {
       return await fetchJson<any[]>('/api/inventory/items');
     } catch {
@@ -274,8 +252,18 @@ export const api = {
     }
   },
 
+  async createInventoryItem(data: any) {
+    try {
+      return await fetchJson<any>('/api/inventory/items', {
+        method: 'POST',
+        body: JSON.stringify(data),
+      });
+    } catch {
+      return getLocalApp().saveInventoryItem(data);
+    }
+  },
+
   async recordStockMovement(data: any) {
-    if (isNative) return getLocalApp().recordStockMovement(data);
     try {
       return await fetchJson<any>('/api/inventory/transactions', {
         method: 'POST',
@@ -287,7 +275,6 @@ export const api = {
   },
 
   async getInventoryTransactions(itemId?: string) {
-    if (isNative) return getLocalApp().getInventoryTransactions(itemId);
     try {
       return await fetchJson<any[]>(`/api/inventory/transactions${itemId ? `?itemId=${itemId}` : ''}`);
     } catch {
@@ -297,7 +284,6 @@ export const api = {
 
   // --- HEALTH & VACCINATION ---
   async getHealthCases(animalId?: string, status?: string) {
-    if (isNative) return getLocalApp().getHealthCases(animalId, status);
     try {
       const query = new URLSearchParams();
       if (animalId) query.set('animalId', animalId);
@@ -309,7 +295,6 @@ export const api = {
   },
 
   async createHealthCase(data: any) {
-    if (isNative) return getLocalApp().createHealthCase(data);
     try {
       return await fetchJson<any>('/api/health/cases', {
         method: 'POST',
@@ -321,7 +306,6 @@ export const api = {
   },
 
   async updateHealthCase(id: string, data: any) {
-    if (isNative) return getLocalApp().updateHealthCase(id, data);
     try {
       return await fetchJson<any>(`/api/health/cases/${encodeURIComponent(id)}`, {
         method: 'PUT',
@@ -333,7 +317,6 @@ export const api = {
   },
 
   async getVaccinations(animalId?: string) {
-    if (isNative) return getLocalApp().getVaccinations(animalId);
     try {
       return await fetchJson<any[]>(`/api/vaccinations${animalId ? `?animalId=${animalId}` : ''}`);
     } catch {
@@ -342,7 +325,6 @@ export const api = {
   },
 
   async recordVaccination(data: any) {
-    if (isNative) return getLocalApp().recordVaccination(data);
     try {
       return await fetchJson<any>('/api/vaccinations', {
         method: 'POST',
@@ -355,7 +337,6 @@ export const api = {
 
   // --- BREEDING & CALVING ---
   async getBreedingRecords(animalId?: string) {
-    if (isNative) return getLocalApp().getBreedingRecords(animalId);
     try {
       return await fetchJson<any[]>(`/api/breeding/records${animalId ? `?animalId=${animalId}` : ''}`);
     } catch {
@@ -364,7 +345,6 @@ export const api = {
   },
 
   async recordBreedingEvent(data: any) {
-    if (isNative) return getLocalApp().recordBreedingEvent(data);
     try {
       return await fetchJson<any>('/api/breeding/records', {
         method: 'POST',
@@ -376,7 +356,6 @@ export const api = {
   },
 
   async recordCalving(data: any) {
-    if (isNative) return getLocalApp().recordCalving(data);
     try {
       return await fetchJson<any>('/api/breeding/calving', {
         method: 'POST',
@@ -388,7 +367,6 @@ export const api = {
   },
 
   async getGrowth(animalId: string) {
-    if (isNative) return getLocalApp().getGrowth(animalId);
     try {
       return await fetchJson<any[]>(`/api/growth/${encodeURIComponent(animalId)}`);
     } catch {
@@ -397,7 +375,6 @@ export const api = {
   },
 
   async recordGrowth(animalId: string, data: any) {
-    if (isNative) return getLocalApp().recordGrowth(animalId, data);
     try {
       return await fetchJson<any>(`/api/growth/${encodeURIComponent(animalId)}`, {
         method: 'POST',
@@ -410,7 +387,6 @@ export const api = {
 
   // --- CUSTOMERS & INVOICES ---
   async getCustomers() {
-    if (isNative) return getLocalApp().getCustomers();
     try {
       return await fetchJson<any[]>('/api/customers');
     } catch {
@@ -419,7 +395,6 @@ export const api = {
   },
 
   async createCustomer(data: any) {
-    if (isNative) return getLocalApp().createCustomer(data);
     try {
       return await fetchJson<any>('/api/customers', {
         method: 'POST',
@@ -431,7 +406,6 @@ export const api = {
   },
 
   async getDeliveries(fromDate?: string, toDate?: string, customerId?: string) {
-    if (isNative) return getLocalApp().getDeliveries(fromDate, toDate, customerId);
     try {
       const query = new URLSearchParams();
       if (fromDate) query.set('fromDate', fromDate);
@@ -444,7 +418,6 @@ export const api = {
   },
 
   async createDelivery(data: any) {
-    if (isNative) return getLocalApp().createDelivery(data);
     try {
       return await fetchJson<any>('/api/deliveries', {
         method: 'POST',
@@ -456,7 +429,6 @@ export const api = {
   },
 
   async recordPayment(deliveryId: string, data: any) {
-    if (isNative) return getLocalApp().recordPayment(deliveryId, data);
     try {
       return await fetchJson<any>(`/api/deliveries/${encodeURIComponent(deliveryId)}/pay`, {
         method: 'POST',
@@ -468,7 +440,6 @@ export const api = {
   },
 
   async getPayments() {
-    if (isNative) return getLocalApp().getPayments();
     try {
       return await fetchJson<any[]>('/api/payments');
     } catch {
@@ -478,7 +449,6 @@ export const api = {
 
   // --- WORKERS & EXPENSES ---
   async getWorkers() {
-    if (isNative) return getLocalApp().getWorkers();
     try {
       return await fetchJson<any[]>('/api/workers');
     } catch {
@@ -487,7 +457,6 @@ export const api = {
   },
 
   async createWorker(data: any) {
-    if (isNative) return getLocalApp().createWorker(data);
     try {
       return await fetchJson<any>('/api/workers', {
         method: 'POST',
@@ -499,7 +468,6 @@ export const api = {
   },
 
   async getWorkerLedger(workerId: string) {
-    if (isNative) return getLocalApp().getWorkerLedger(workerId);
     try {
       return await fetchJson<any>(`/api/workers/${encodeURIComponent(workerId)}/ledger`);
     } catch {
@@ -508,7 +476,6 @@ export const api = {
   },
 
   async recordWorkerTx(workerId: string, data: any) {
-    if (isNative) return getLocalApp().recordWorkerTx(workerId, data);
     try {
       return await fetchJson<any>(`/api/workers/${encodeURIComponent(workerId)}/transactions`, {
         method: 'POST',
@@ -520,7 +487,6 @@ export const api = {
   },
 
   async getExpenses(fromDate?: string, toDate?: string, category?: string) {
-    if (isNative) return getLocalApp().getExpenses(fromDate, toDate, category);
     try {
       const query = new URLSearchParams();
       if (fromDate) query.set('fromDate', fromDate);
@@ -533,7 +499,6 @@ export const api = {
   },
 
   async recordExpense(data: any) {
-    if (isNative) return getLocalApp().recordExpense(data);
     try {
       return await fetchJson<any>('/api/expenses', {
         method: 'POST',
@@ -546,7 +511,6 @@ export const api = {
 
   // --- REMINDERS & NOTIFICATIONS ---
   async getTasks(status?: string) {
-    if (isNative) return getLocalApp().getTasks(status);
     try {
       return await fetchJson<any[]>(`/api/reminders${status ? `?status=${status}` : ''}`);
     } catch {
@@ -555,7 +519,6 @@ export const api = {
   },
 
   async createTask(data: any) {
-    if (isNative) return getLocalApp().createTask(data);
     try {
       return await fetchJson<any>('/api/reminders', {
         method: 'POST',
@@ -567,7 +530,6 @@ export const api = {
   },
 
   async completeTask(id: string) {
-    if (isNative) return getLocalApp().completeTask(id);
     try {
       return await fetchJson<any>(`/api/reminders/${encodeURIComponent(id)}/complete`, {
         method: 'POST',
@@ -578,7 +540,6 @@ export const api = {
   },
 
   async deleteTask(id: string) {
-    if (isNative) return getLocalApp().deleteTask(id);
     try {
       return await fetchJson<any>(`/api/reminders/${encodeURIComponent(id)}`, {
         method: 'DELETE',
@@ -589,7 +550,6 @@ export const api = {
   },
 
   async getNotificationsSummary() {
-    if (isNative) return getLocalApp().getNotificationsSummary();
     try {
       return await fetchJson<any>('/api/reminders/notifications');
     } catch {
@@ -599,7 +559,6 @@ export const api = {
 
   // --- REPORTS ---
   async getFinancialReport(fromDate?: string, toDate?: string) {
-    if (isNative) return getLocalApp().getFinancialReport(fromDate, toDate);
     try {
       const query = new URLSearchParams();
       if (fromDate) query.set('fromDate', fromDate);
@@ -611,7 +570,6 @@ export const api = {
   },
 
   async getHerdStatistics() {
-    if (isNative) return getLocalApp().getHerdStatistics();
     try {
       return await fetchJson<any>('/api/reports/herd');
     } catch {
@@ -621,7 +579,6 @@ export const api = {
 
   // --- SETTINGS, HEALTH & BACKUP ---
   async getSettings() {
-    if (isNative) return getLocalApp().getSettings();
     try {
       return await fetchJson<any>('/api/settings');
     } catch {
@@ -630,7 +587,6 @@ export const api = {
   },
 
   async saveSettings(data: any) {
-    if (isNative) return getLocalApp().saveSettings(data);
     try {
       return await fetchJson<any>('/api/settings', {
         method: 'POST',
@@ -642,7 +598,6 @@ export const api = {
   },
 
   async getGroups() {
-    if (isNative) return getLocalApp().getGroups();
     try {
       return await fetchJson<string[]>('/api/settings/groups');
     } catch {
@@ -651,7 +606,6 @@ export const api = {
   },
 
   async saveGroups(groups: string[]) {
-    if (isNative) return getLocalApp().saveGroups(groups);
     try {
       return await fetchJson<any>('/api/settings/groups', {
         method: 'POST',
@@ -663,7 +617,6 @@ export const api = {
   },
 
   async getDatabaseHealth() {
-    if (isNative) return getLocalApp().getDatabaseHealth();
     try {
       return await fetchJson<any>('/api/settings/health');
     } catch {
@@ -672,7 +625,6 @@ export const api = {
   },
 
   async getAuditLogs() {
-    if (isNative) return getLocalApp().getAuditLogs();
     try {
       return await fetchJson<any[]>('/api/audit');
     } catch {
@@ -681,7 +633,6 @@ export const api = {
   },
 
   async validateBackup(content: any) {
-    if (isNative) return getLocalApp().validateBackup(content);
     try {
       return await fetchJson<any>('/api/backup/validate', {
         method: 'POST',
@@ -694,7 +645,6 @@ export const api = {
 
   // --- CSV IMPORT / EXPORT ---
   async previewCsv(module: 'ANIMALS' | 'MILK' | 'CUSTOMERS', text: string) {
-    if (isNative) return getLocalApp().previewCsv(module, text);
     try {
       return await fetchJson<any>('/api/csv/preview', {
         method: 'POST',
@@ -706,7 +656,6 @@ export const api = {
   },
 
   async executeCsvImport(preview: any) {
-    if (isNative) return getLocalApp().executeCsvImport(preview);
     try {
       return await fetchJson<any>('/api/csv/import', {
         method: 'POST',

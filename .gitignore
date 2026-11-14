@@ -1,8 +1,54 @@
+# Dependencies
 node_modules/
-build/
+
+# Build outputs
 dist/
-coverage/
-.DS_Store
+dist-electron/
+
+# Database (local data - never commit)
+*.sqlite
+*.sqlite-journal
+*.sqlite-wal
+*.sqlite-shm
+
+# Environment variables
+.env
+.env.local
+.env.production
+
+# Logs & Backups
+logs/
 *.log
-.env*
-!.env.example
+npm-debug.log*
+backups/
+
+# Archives & Binaries
+*.zip
+*.tar.gz
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Editor files
+.vscode/
+.idea/
+*.suo
+*.user
+
+# TypeScript cache
+*.tsbuildinfo
+
+# Temporary files
+*.tmp
+*.temp
+sfx_config.txt
+loading.html
+
+# Electron cache
+electron-builder-cache/
+
+# Android (Capacitor - not needed for desktop)
+android/
+ios/

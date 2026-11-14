@@ -1,6 +1,6 @@
 /**
  * Platform Adapter Interfaces for Dairy Farm ERP
- * Strictly platform-agnostic contracts for Web and Android implementations.
+ * Clean architecture contracts for Desktop (Windows Laptop) and Web implementations.
  * No domain service or presentation logic directly depends on platform APIs.
  */
 
@@ -65,5 +65,5 @@ export interface PlatformAdapters {
   backup: IBackupAdapter;
   share: IShareAdapter;
   isNative: boolean;
-  platform: 'web' | 'android' | 'ios';
+  platform: 'desktop' | 'web';
 }
