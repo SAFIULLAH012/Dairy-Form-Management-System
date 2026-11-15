@@ -3,7 +3,11 @@ import { api } from '../api/api.ts';
 import { Modal } from '../components/Modal.tsx';
 import { Stethoscope, Plus, CheckCircle, Clock, AlertCircle } from 'lucide-react';
 
-export const HealthPage: React.FC = () => {
+interface HealthPageProps {
+  autoOpenNonce?: number;
+}
+
+export const HealthPage: React.FC<HealthPageProps> = ({ autoOpenNonce }) => {
   const [cases, setCases] = useState<any[]>([]);
   const [cows, setCows] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -50,6 +54,12 @@ export const HealthPage: React.FC = () => {
   useEffect(() => {
     loadData();
   }, [statusFilter]);
+
+  useEffect(() => {
+    if (autoOpenNonce) {
+      handleOpenAdd();
+    }
+  }, [autoOpenNonce]);
 
   const handleOpenAdd = () => {
     setEditingCase(null);

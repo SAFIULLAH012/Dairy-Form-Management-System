@@ -4,7 +4,11 @@ import { Modal } from '../components/Modal.tsx';
 import { GitBranch, Plus, Sparkles, Baby, TrendingUp, Calendar, Heart } from 'lucide-react';
 import { calculateBreedingPredictions } from '../domain/calculations.ts';
 
-export const BreedingPage: React.FC = () => {
+interface BreedingPageProps {
+  autoOpenNonce?: number;
+}
+
+export const BreedingPage: React.FC<BreedingPageProps> = ({ autoOpenNonce }) => {
   const [records, setRecords] = useState<any[]>([]);
   const [cows, setCows] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -67,6 +71,12 @@ export const BreedingPage: React.FC = () => {
   useEffect(() => {
     loadData();
   }, []);
+
+  useEffect(() => {
+    if (autoOpenNonce) {
+      setShowEventModal(true);
+    }
+  }, [autoOpenNonce]);
 
   // Real-time biological predictions display
   const predictions = calculateBreedingPredictions({

@@ -1,4 +1,4 @@
-﻿# Create Desktop Shortcut for BA Farm
+# Create Desktop Shortcut for BA Farm
 $wsh = New-Object -ComObject WScript.Shell
 $desktop = [Environment]::GetFolderPath('Desktop')
 $baseDir = Split-Path -Parent $PSScriptRoot

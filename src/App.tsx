@@ -26,7 +26,13 @@ export default function App() {
   const [currentTab, setCurrentTab] = useState<NavItem>('dashboard');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isQuickAddOpen, setIsQuickAddOpen] = useState(false);
+  const [quickActionNonce, setQuickActionNonce] = useState(0);
   const [pendingCount, setPendingCount] = useState(0);
+
+  const handleQuickAddNavigate = (tab: NavItem) => {
+    setCurrentTab(tab);
+    setQuickActionNonce(prev => prev + 1);
+  };
 
   const fetchPendingCount = async () => {
     try {
@@ -97,22 +103,25 @@ export default function App() {
                 onOpenQuickAdd={() => setIsQuickAddOpen(true)}
               />
             )}
-            {currentTab === 'animals' && <AnimalsPage />}
-            {currentTab === 'male' && <MaleAnimalsPage />}
+            {currentTab === 'animals' && <AnimalsPage autoOpenNonce={quickActionNonce} />}
+            {currentTab === 'male' && <MaleAnimalsPage autoOpenNonce={quickActionNonce} />}
             {currentTab === 'cowprofiles' && <CowProfilesPage />}
-            {currentTab === 'milk' && <MilkPage />}
-            {currentTab === 'deliveries' && <SalesPage />}
-            {currentTab === 'customers' && <CustomersPage />}
-            {currentTab === 'feed' && <FeedPage />}
-            {currentTab === 'inventory' && <InventoryPage />}
-            {currentTab === 'health' && <HealthPage />}
-            {currentTab === 'vaccination' && <VaccinationPage />}
-            {currentTab === 'breeding' && <BreedingPage />}
+            {currentTab === 'milk' && <MilkPage autoOpenNonce={quickActionNonce} />}
+            {currentTab === 'deliveries' && <SalesPage autoOpenNonce={quickActionNonce} />}
+            {currentTab === 'customers' && <CustomersPage autoOpenNonce={quickActionNonce} />}
+            {currentTab === 'feed' && <FeedPage autoOpenNonce={quickActionNonce} />}
+            {currentTab === 'inventory' && <InventoryPage autoOpenNonce={quickActionNonce} />}
+            {currentTab === 'health' && <HealthPage autoOpenNonce={quickActionNonce} />}
+            {currentTab === 'vaccination' && <VaccinationPage autoOpenNonce={quickActionNonce} />}
+            {currentTab === 'breeding' && <BreedingPage autoOpenNonce={quickActionNonce} />}
             {currentTab === 'tasks' && (
-              <RemindersPage onNavigateToModule={mod => setCurrentTab(mod)} />
+              <RemindersPage
+                onNavigateToModule={mod => setCurrentTab(mod)}
+                autoOpenNonce={quickActionNonce}
+              />
             )}
-            {currentTab === 'workers' && <WorkersPage />}
-            {currentTab === 'expenses' && <ExpensesPage />}
+            {currentTab === 'workers' && <WorkersPage autoOpenNonce={quickActionNonce} />}
+            {currentTab === 'expenses' && <ExpensesPage autoOpenNonce={quickActionNonce} />}
             {currentTab === 'reports' && <ReportsPage />}
             {currentTab === 'settings' && <SettingsPage />}
           </ErrorBoundary>
@@ -123,7 +132,7 @@ export default function App() {
       <QuickAddModal
         isOpen={isQuickAddOpen}
         onClose={() => setIsQuickAddOpen(false)}
-        onNavigate={tab => setCurrentTab(tab)}
+        onNavigate={handleQuickAddNavigate}
       />
     </div>
   );

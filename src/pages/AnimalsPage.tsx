@@ -15,7 +15,11 @@ import {
   HeartCrack,
 } from 'lucide-react';
 
-export const AnimalsPage: React.FC = () => {
+interface AnimalsPageProps {
+  autoOpenNonce?: number;
+}
+
+export const AnimalsPage: React.FC<AnimalsPageProps> = ({ autoOpenNonce }) => {
   const [animals, setAnimals] = useState<any[]>([]);
   const [groups, setGroups] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
@@ -129,6 +133,12 @@ export const AnimalsPage: React.FC = () => {
     });
     setShowAddModal(true);
   };
+
+  useEffect(() => {
+    if (autoOpenNonce) {
+      handleOpenAdd();
+    }
+  }, [autoOpenNonce]);
 
   const handleSaveAnimal = async () => {
     if (!formData.id.trim()) {

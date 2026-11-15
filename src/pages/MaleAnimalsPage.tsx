@@ -3,7 +3,11 @@ import { api } from '../api/api.ts';
 import { Modal } from '../components/Modal.tsx';
 import { Search, Plus, DollarSign, Edit2, Calendar, HeartCrack } from 'lucide-react';
 
-export const MaleAnimalsPage: React.FC = () => {
+interface MaleAnimalsPageProps {
+  autoOpenNonce?: number;
+}
+
+export const MaleAnimalsPage: React.FC<MaleAnimalsPageProps> = ({ autoOpenNonce }) => {
   const [males, setMales] = useState<any[]>([]);
   const [groups, setGroups] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
@@ -81,6 +85,12 @@ export const MaleAnimalsPage: React.FC = () => {
     });
     setShowAddModal(true);
   };
+
+  useEffect(() => {
+    if (autoOpenNonce) {
+      handleOpenAdd();
+    }
+  }, [autoOpenNonce]);
 
   const handleOpenEdit = (m: any) => {
     setEditingAnimal(m);

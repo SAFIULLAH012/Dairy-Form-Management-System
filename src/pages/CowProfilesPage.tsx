@@ -16,6 +16,7 @@ import {
   Minus,
   AlertCircle,
   CheckCircle2,
+  Printer,
 } from 'lucide-react';
 
 // ─── Mini bar chart using canvas-free SVG ───────────────────────────────────
@@ -183,8 +184,15 @@ const CowProfilePanel: React.FC<{ animal: any; onClose: () => void }> = ({ anima
             <div className="text-xl font-black truncate">{animal.id}</div>
             <div className="text-emerald-200 text-sm">{animal.breed} · {animal.sex}</div>
           </div>
+          <button
+            onClick={() => window.print()}
+            className="mt-0.5 inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-white/20 hover:bg-white/30 text-white font-bold text-xs transition-colors cursor-pointer shrink-0"
+          >
+            <Printer className="w-3.5 h-3.5" />
+            <span>Print Passport</span>
+          </button>
           {animal.photoUrl && (
-            <img src={animal.photoUrl} alt="" className="w-14 h-14 rounded-full object-cover border-2 border-white/50 shadow" />
+            <img src={animal.photoUrl} alt="" className="w-14 h-14 rounded-full object-cover border-2 border-white/50 shadow shrink-0" />
           )}
         </div>
 
@@ -193,7 +201,20 @@ const CowProfilePanel: React.FC<{ animal: any; onClose: () => void }> = ({ anima
             <div className="animate-spin rounded-full h-10 w-10 border-4 border-emerald-600 border-t-transparent" />
           </div>
         ) : (
-          <div className="p-5 space-y-5">
+          <div className="printable-sheet p-5 space-y-5">
+            {/* Printable Official Header (visible on print) */}
+            <div className="hidden print:flex items-center justify-between border-b-2 border-emerald-800 pb-3 mb-4">
+              <div>
+                <h1 className="text-xl font-black text-emerald-950 uppercase tracking-wide">BA Dairy Farm</h1>
+                <p className="text-xs text-stone-500">Official Bovine Pedigree, Lactation & Medical Passport</p>
+              </div>
+              <div className="text-right">
+                <span className="px-2.5 py-1 bg-emerald-100 text-emerald-900 border border-emerald-300 rounded font-bold text-[10px] uppercase">
+                  Verified Herd Passport
+                </span>
+                <div className="text-[10px] text-stone-400 mt-1">Printed: {new Date().toLocaleDateString()}</div>
+              </div>
+            </div>
             {/* Key stats */}
             <div className="grid grid-cols-3 gap-3">
               {[
@@ -354,6 +375,18 @@ const CowProfilePanel: React.FC<{ animal: any; onClose: () => void }> = ({ anima
                     <span className="font-medium text-stone-800 break-all">{v}</span>
                   </div>
                 ))}
+              </div>
+            </div>
+
+            {/* Official Certification & Veterinary Signatures */}
+            <div className="pt-6 grid grid-cols-2 gap-8 text-center text-xs">
+              <div className="signature-box pt-3 border-t border-stone-300">
+                <div className="font-bold text-stone-900">Herd Manager / Registrar</div>
+                <div className="text-[10px] text-stone-400">Pedigree Authenticity & Life Event Seal</div>
+              </div>
+              <div className="signature-box pt-3 border-t border-stone-300">
+                <div className="font-bold text-stone-900">Attending Veterinarian</div>
+                <div className="text-[10px] text-stone-400">Clinical Health & Immunization Verification</div>
               </div>
             </div>
           </div>

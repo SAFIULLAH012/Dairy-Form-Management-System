@@ -14,7 +14,11 @@ import {
   AlertCircle,
 } from 'lucide-react';
 
-export const MilkPage: React.FC = () => {
+interface MilkPageProps {
+  autoOpenNonce?: number;
+}
+
+export const MilkPage: React.FC<MilkPageProps> = ({ autoOpenNonce }) => {
   const [totalEntries, setTotalEntries] = useState<any[]>([]);
   const [shifts, setShifts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -63,6 +67,12 @@ export const MilkPage: React.FC = () => {
   useEffect(() => {
     loadData();
   }, [fromDate, toDate]);
+
+  useEffect(() => {
+    if (autoOpenNonce) {
+      setShowTotalModal(true);
+    }
+  }, [autoOpenNonce]);
 
   const handleSaveTotal = async () => {
     if (!totalForm.totalLitres || parseFloat(totalForm.totalLitres) <= 0) {

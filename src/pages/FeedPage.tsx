@@ -4,7 +4,11 @@ import { Modal } from '../components/Modal.tsx';
 import { Wheat, Plus, Calculator, Users, Package, AlertTriangle, CheckCircle } from 'lucide-react';
 import { maundToKg, calculateFeedCost } from '../domain/calculations.ts';
 
-export const FeedPage: React.FC = () => {
+interface FeedPageProps {
+  autoOpenNonce?: number;
+}
+
+export const FeedPage: React.FC<FeedPageProps> = ({ autoOpenNonce }) => {
   const [feedLogs, setFeedLogs] = useState<any[]>([]);
   const [groups, setGroups] = useState<string[]>([]);
   const [inventoryItems, setInventoryItems] = useState<any[]>([]);
@@ -55,6 +59,12 @@ export const FeedPage: React.FC = () => {
   };
 
   useEffect(() => { loadData(); }, [groupFilter]);
+
+  useEffect(() => {
+    if (autoOpenNonce) {
+      setShowAddModal(true);
+    }
+  }, [autoOpenNonce]);
 
   useEffect(() => {
     if (showAddModal && feedForm.group) {

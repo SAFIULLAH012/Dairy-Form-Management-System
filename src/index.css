@@ -1,20 +1,90 @@
 @import "tailwindcss";
 
 @media print {
+  /* Hide application shell, sidebars, headers, toolbars, buttons and modals backdrops */
   aside,
   header,
   nav,
   button,
-  .no-print {
+  input:not([type="checkbox"]):not([type="radio"]),
+  select,
+  .no-print,
+  .modal-backdrop-blur {
     display: none !important;
   }
 
+  /* Reset document root for crisp black-and-white / color paper printing */
+  html,
   body,
+  #root,
   main {
-    background: white !important;
+    background: #ffffff !important;
+    color: #111827 !important;
     padding: 0 !important;
     margin: 0 !important;
-    color: black !important;
+    width: 100% !important;
+    font-size: 11pt !important;
+    line-height: 1.4 !important;
+  }
+
+  /* Ensure modal overlays don't clip or position fixed during print */
+  .fixed.inset-0 {
+    position: static !important;
+    background: transparent !important;
+    backdrop-filter: none !important;
+    padding: 0 !important;
+    display: block !important;
+    height: auto !important;
+    width: 100% !important;
+    overflow: visible !important;
+  }
+
+  .bg-white.rounded-2xl {
+    box-shadow: none !important;
+    border: none !important;
+    border-radius: 0 !important;
+    max-height: none !important;
+    overflow: visible !important;
+    width: 100% !important;
+  }
+
+  /* Target printable sheet container */
+  .printable-sheet {
+    box-shadow: none !important;
+    border: 1px solid #e5e7eb !important;
+    border-radius: 8px !important;
+    padding: 24px !important;
+    margin: 0 auto !important;
+    width: 100% !important;
+    max-width: 850px !important;
+    background: #ffffff !important;
+    page-break-inside: avoid;
+  }
+
+  /* Ensure tables render with neat borders and headers */
+  table {
+    width: 100% !important;
+    border-collapse: collapse !important;
+    page-break-inside: auto;
+  }
+
+  tr {
+    page-break-inside: avoid;
+    page-break-after: auto;
+  }
+
+  thead {
+    display: table-header-group;
+  }
+
+  th, td {
+    border-color: #e5e7eb !important;
+  }
+
+  /* Color preservation for badges, statuses and highlights */
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
   }
 
   .shadow-xs,
@@ -23,6 +93,13 @@
   .shadow-lg,
   .shadow-xl {
     box-shadow: none !important;
-    border-color: #cbd5e1 !important;
+  }
+
+  /* Clean signature area */
+  .signature-box {
+    border-top: 1px solid #9ca3af !important;
+    padding-top: 4px !important;
+    margin-top: 40px !important;
+    text-align: center !important;
   }
 }

@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { api } from '../api/api.ts';
 import { Modal } from './Modal.tsx';
-import { Activity, Beaker, Heart, Calendar, ArrowUpRight, ArrowDownRight } from 'lucide-react';
+import { Activity, Beaker, Heart, Calendar, ArrowUpRight, ArrowDownRight, Printer } from 'lucide-react';
 import { calculateAge } from '../domain/calculations.ts';
 
 interface AnimalProfileModalProps {
@@ -51,11 +51,35 @@ export const AnimalProfileModal: React.FC<AnimalProfileModalProps> = ({ animalId
   const maxMilk = Math.max(...last14Days.map(getYield), 10); // Minimum scale 10
 
   return (
-    <Modal title={`Cow Profile: ${animal?.id || animalId}`} isOpen={isOpen} onClose={onClose}>
+    <Modal
+      title={`Cow Profile: ${animal?.id || animalId}`}
+      isOpen={isOpen}
+      onClose={onClose}
+      footer={
+        <div className="flex items-center justify-between w-full">
+          <span className="text-[11px] text-stone-500">Official BA Dairy Herd Management Dossier</span>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={onClose}
+              className="px-3 py-1.5 text-xs font-semibold text-stone-600 hover:bg-stone-100 rounded-lg cursor-pointer"
+            >
+              Close
+            </button>
+            <button
+              onClick={() => window.print()}
+              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-bold text-white bg-[#16734b] hover:bg-[#125e3d] rounded-lg shadow-xs transition-colors cursor-pointer"
+            >
+              <Printer className="w-4 h-4" />
+              <span>Print Passport</span>
+            </button>
+          </div>
+        </div>
+      }
+    >
       {loading ? (
         <div className="py-10 text-center text-stone-500 animate-pulse">Loading profile data...</div>
       ) : (
-        <div className="space-y-6">
+        <div className="printable-sheet space-y-6">
           
           {/* Header Stats */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">

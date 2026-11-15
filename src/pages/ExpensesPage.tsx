@@ -3,7 +3,11 @@ import { api } from '../api/api.ts';
 import { Modal } from '../components/Modal.tsx';
 import { Receipt, Plus, Calendar, DollarSign } from 'lucide-react';
 
-export const ExpensesPage: React.FC = () => {
+interface ExpensesPageProps {
+  autoOpenNonce?: number;
+}
+
+export const ExpensesPage: React.FC<ExpensesPageProps> = ({ autoOpenNonce }) => {
   const [expenses, setExpenses] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [categoryFilter, setCategoryFilter] = useState('');
@@ -54,6 +58,12 @@ export const ExpensesPage: React.FC = () => {
   useEffect(() => {
     loadData();
   }, [fromDate, toDate, categoryFilter]);
+
+  useEffect(() => {
+    if (autoOpenNonce) {
+      setShowAddModal(true);
+    }
+  }, [autoOpenNonce]);
 
   const handleSaveExpense = async () => {
     const amt = parseFloat(formData.amount);

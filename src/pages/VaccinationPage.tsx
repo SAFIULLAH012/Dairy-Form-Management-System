@@ -4,7 +4,11 @@ import { Modal } from '../components/Modal.tsx';
 import { AnimalSearchInput } from '../components/AnimalSearchInput.tsx';
 import { Syringe, Plus, Calendar, AlertTriangle, CheckCircle2 } from 'lucide-react';
 
-export const VaccinationPage: React.FC = () => {
+interface VaccinationPageProps {
+  autoOpenNonce?: number;
+}
+
+export const VaccinationPage: React.FC<VaccinationPageProps> = ({ autoOpenNonce }) => {
   const [vaccinations, setVaccinations] = useState<any[]>([]);
   const [cows, setCows] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -44,6 +48,12 @@ export const VaccinationPage: React.FC = () => {
   useEffect(() => {
     loadData();
   }, []);
+
+  useEffect(() => {
+    if (autoOpenNonce) {
+      setShowAddModal(true);
+    }
+  }, [autoOpenNonce]);
 
   const handleSaveVaccination = async () => {
     if (formData.nextDueDate && formData.lastDate && formData.nextDueDate < formData.lastDate) {

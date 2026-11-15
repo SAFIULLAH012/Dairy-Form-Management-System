@@ -118,7 +118,30 @@ export const ReportsPage: React.FC = () => {
       </div>
 
       {report && (
-        <>
+        <div className="printable-sheet space-y-4">
+          {/* Executive Print Header (Displays on Print) */}
+          <div className="hidden print:block border-b-2 border-emerald-800 pb-4 mb-4">
+            <div className="flex items-start justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-emerald-800 to-emerald-950 text-white font-black text-xl flex items-center justify-center">
+                  BA
+                </div>
+                <div>
+                  <h1 className="text-xl font-black text-emerald-950 tracking-tight uppercase">BA Dairy Farm</h1>
+                  <p className="text-xs text-stone-600 font-medium">Boardroom Financial & Operational Performance Report</p>
+                  <p className="text-[10px] text-stone-400">Audited Milk Volume, Production Yield, Sales Ledger & Feed Margin</p>
+                </div>
+              </div>
+              <div className="text-right">
+                <span className="inline-block px-3 py-1 bg-emerald-100 text-emerald-900 font-black text-[11px] rounded uppercase border border-emerald-300">
+                  Certified Management Report
+                </span>
+                <div className="text-xs font-bold text-stone-800 mt-1">Period: {fromDate} → {toDate}</div>
+                <div className="text-[10px] text-stone-400">Generated: {new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}</div>
+              </div>
+            </div>
+          </div>
+
           {/* Key Summary Cards */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-3.5">
             <div className="bg-white p-4 rounded-xl border border-stone-200 shadow-xs">
@@ -293,7 +316,19 @@ export const ReportsPage: React.FC = () => {
               </div>
             </div>
           )}
-        </>
+
+          {/* Executive & Financial Certification Signatures */}
+          <div className="pt-8 grid grid-cols-2 gap-8 text-center text-xs">
+            <div className="signature-box pt-3 border-t border-stone-300">
+              <div className="font-bold text-stone-900">Chief Accountant / Operations Lead</div>
+              <div className="text-[10px] text-stone-400">Ledger Reconciled & Financials Verified</div>
+            </div>
+            <div className="signature-box pt-3 border-t border-stone-300">
+              <div className="font-bold text-stone-900">Managing Director / Dairy Owner</div>
+              <div className="text-[10px] text-stone-400">Executive Approval & Operational Review</div>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

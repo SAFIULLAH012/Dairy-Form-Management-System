@@ -3,7 +3,11 @@ import { api } from '../api/api.ts';
 import { Modal } from '../components/Modal.tsx';
 import { Package, Plus, ArrowDownRight, ArrowUpRight, History, AlertTriangle } from 'lucide-react';
 
-export const InventoryPage: React.FC = () => {
+interface InventoryPageProps {
+  autoOpenNonce?: number;
+}
+
+export const InventoryPage: React.FC<InventoryPageProps> = ({ autoOpenNonce }) => {
   const [items, setItems] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [showTransactionModal, setShowTransactionModal] = useState(false);
@@ -48,6 +52,12 @@ export const InventoryPage: React.FC = () => {
   useEffect(() => {
     loadData();
   }, []);
+
+  useEffect(() => {
+    if (autoOpenNonce) {
+      setShowTransactionModal(true);
+    }
+  }, [autoOpenNonce]);
 
   const handleSaveMovement = async () => {
     if (!txForm.quantity || parseFloat(txForm.quantity) <= 0) {

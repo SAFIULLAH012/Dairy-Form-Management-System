@@ -1,9 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import { api } from '../api/api.ts';
 import { Modal } from '../components/Modal.tsx';
-import { Users, Plus, Phone, Building2, Receipt, ArrowRight } from 'lucide-react';
+import { Users, Plus, Phone, Building2, Receipt, ArrowRight, Printer } from 'lucide-react';
 
-export const CustomersPage: React.FC = () => {
+interface CustomersPageProps {
+  autoOpenNonce?: number;
+}
+
+export const CustomersPage: React.FC<CustomersPageProps> = ({ autoOpenNonce }) => {
   const [customers, setCustomers] = useState<any[]>([]);
   const [deliveries, setDeliveries] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -37,6 +41,12 @@ export const CustomersPage: React.FC = () => {
   useEffect(() => {
     loadData();
   }, []);
+
+  useEffect(() => {
+    if (autoOpenNonce) {
+      handleOpenAdd();
+    }
+  }, [autoOpenNonce]);
 
   const handleSaveCustomer = async () => {
     if (!formData.name.trim()) {
@@ -318,61 +328,134 @@ export const CustomersPage: React.FC = () => {
         </div>
       </Modal>
 
-      {/* Customer Ledger Modal */}
+      {/* Customer Ledger Modal with Splendid Print Statement */}
       <Modal
         title={`Customer Ledger — ${selectedLedgerCustomer?.name || ''}`}
         isOpen={Boolean(selectedLedgerCustomer)}
         onClose={() => setSelectedLedgerCustomer(null)}
         maxWidth="lg"
+        footer={
+          <div className="flex items-center justify-between w-full">
+            <div className="text-[11px] text-stone-500">
+              Account credit window: {selectedLedgerCustomer?.paymentTermsDays || 7} days
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setSelectedLedgerCustomer(null)}
+                className="px-3 py-1.5 text-xs font-semibold text-stone-600 hover:bg-stone-100 rounded-lg cursor-pointer"
+              >
+                Close
+              </button>
+              <button
+                onClick={() => window.print()}
+                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-bold text-white bg-[#16734b] hover:bg-[#125e3d] rounded-lg shadow-xs transition-colors cursor-pointer"
+              >
+                <Printer className="w-4 h-4" />
+                <span>Print Statement</span>
+              </button>
+            </div>
+          </div>
+        }
       >
-        <div className="space-y-4 text-xs">
-          <div className="grid grid-cols-3 gap-3 p-3 bg-stone-50 rounded-xl border border-stone-200 text-center">
+        <div className="printable-sheet space-y-4 text-xs text-stone-800">
+          {/* Header visible in print / preview */}
+          <div className="border-b-2 border-emerald-800 pb-3 flex items-start justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-700 to-emerald-950 text-white font-black text-base flex items-center justify-center shadow-xs">
+                BA
+              </div>
+              <div>
+                <h2 className="text-base font-black tracking-wide text-emerald-950 uppercase">BA Dairy Farm</h2>
+                <p className="text-[11px] text-stone-500">Commercial Milk Supply & Client Ledger Account</p>
+              </div>
+            </div>
+            <div className="text-right">
+              <span className="inline-block px-2.5 py-0.5 bg-emerald-100 text-emerald-900 font-extrabold rounded-md text-[10px] tracking-wider uppercase border border-emerald-300">
+                Official Account Statement
+              </span>
+              <div className="text-[11px] text-stone-500 mt-1">
+                Statement Date: {new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
+              </div>
+            </div>
+          </div>
+
+          {/* Customer Profile Banner */}
+          <div className="grid grid-cols-2 gap-3 p-3 bg-stone-50 rounded-xl border border-stone-200">
             <div>
-              <span className="text-[10px] text-stone-500 font-medium">Total Billed</span>
-              <div className="text-base font-bold text-stone-900">
+              <span className="text-[10px] text-stone-400 font-bold uppercase tracking-wider">Account Holder</span>
+              <div className="text-sm font-extrabold text-stone-900">{selectedLedgerCustomer?.name}</div>
+              {selectedLedgerCustomer?.company && (
+                <div className="text-xs text-stone-600 font-medium">{selectedLedgerCustomer.company}</div>
+              )}
+              <div className="text-xs text-stone-600 mt-0.5">📞 {selectedLedgerCustomer?.phone || 'No phone recorded'}</div>
+              {selectedLedgerCustomer?.address && (
+                <div className="text-xs text-stone-500">{selectedLedgerCustomer.address}</div>
+              )}
+            </div>
+            <div className="text-right flex flex-col justify-between">
+              <div>
+                <span className="text-[10px] text-stone-400 font-bold uppercase tracking-wider">Agreed Terms</span>
+                <div className="text-xs font-bold text-stone-800 mt-0.5">
+                  Contract Rate: <span className="text-emerald-700 font-extrabold">Rs. {selectedLedgerCustomer?.defaultRatePerL || 210}</span> / Litre
+                </div>
+                <div className="text-xs text-stone-600">Credit Cycle: {selectedLedgerCustomer?.paymentTermsDays || 7} Days</div>
+              </div>
+              <div className="text-[10px] text-stone-400">Account Status: <span className="text-emerald-700 font-bold">Active Commercial Client</span></div>
+            </div>
+          </div>
+
+          {/* Summary Strip */}
+          <div className="grid grid-cols-3 gap-3 p-3 bg-white rounded-xl border border-stone-200 text-center">
+            <div className="p-2 bg-stone-50 rounded-lg">
+              <span className="text-[10px] text-stone-500 font-semibold uppercase">Total Billed</span>
+              <div className="text-base font-extrabold text-stone-900">
                 Rs. {selectedLedgerCustomer?.totalBilled?.toLocaleString()}
               </div>
             </div>
-            <div>
-              <span className="text-[10px] text-stone-500 font-medium">Total Paid</span>
-              <div className="text-base font-bold text-emerald-800">
+            <div className="p-2 bg-emerald-50 rounded-lg border border-emerald-100">
+              <span className="text-[10px] text-emerald-800 font-semibold uppercase">Total Settled / Paid</span>
+              <div className="text-base font-extrabold text-emerald-800">
                 Rs. {selectedLedgerCustomer?.totalPaid?.toLocaleString()}
               </div>
             </div>
-            <div>
-              <span className="text-[10px] text-stone-500 font-medium">Outstanding Due</span>
+            <div className="p-2 bg-rose-50 rounded-lg border border-rose-200">
+              <span className="text-[10px] text-rose-700 font-bold uppercase">Outstanding Balance Due</span>
               <div className="text-base font-black text-rose-700">
                 Rs. {selectedLedgerCustomer?.totalOutstanding?.toLocaleString()}
               </div>
             </div>
           </div>
 
-          <div className="max-h-60 overflow-y-auto border border-stone-200 rounded-lg">
+          {/* Invoices Ledger Table */}
+          <div className="overflow-x-auto border border-stone-200 rounded-lg">
             <table className="w-full text-left text-[11px]">
-              <thead className="bg-stone-50 text-stone-500 sticky top-0">
+              <thead className="bg-stone-100 text-stone-600 font-bold">
                 <tr>
                   <th className="p-2">Invoice #</th>
                   <th className="p-2">Date</th>
-                  <th className="p-2">Litres</th>
-                  <th className="p-2">Total</th>
-                  <th className="p-2">Paid</th>
-                  <th className="p-2">Remaining</th>
-                  <th className="p-2">Status</th>
+                  <th className="p-2 text-right">Volume</th>
+                  <th className="p-2 text-right">Billed Amount</th>
+                  <th className="p-2 text-right">Paid</th>
+                  <th className="p-2 text-right">Balance Due</th>
+                  <th className="p-2 text-center">Status</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-stone-100">
                 {selectedLedgerCustomer?.deliveries?.map((d: any) => (
-                  <tr key={d.id}>
-                    <td className="p-2 font-mono font-bold">{d.invoiceNumber}</td>
-                    <td className="p-2">{d.date}</td>
-                    <td className="p-2">{d.litres} L</td>
-                    <td className="p-2 font-bold">Rs. {d.totalAmount.toLocaleString()}</td>
-                    <td className="p-2 text-emerald-700">Rs. {d.paidAmount.toLocaleString()}</td>
-                    <td className="p-2 font-bold text-rose-600">
+                  <tr key={d.id} className="hover:bg-stone-50">
+                    <td className="p-2 font-mono font-bold text-stone-900">{d.invoiceNumber}</td>
+                    <td className="p-2 text-stone-600">{d.date}</td>
+                    <td className="p-2 text-right font-medium">{d.litres} L</td>
+                    <td className="p-2 text-right font-bold text-stone-900">Rs. {d.totalAmount.toLocaleString()}</td>
+                    <td className="p-2 text-right font-semibold text-emerald-700">Rs. {d.paidAmount.toLocaleString()}</td>
+                    <td className="p-2 text-right font-black text-rose-600">
                       Rs. {d.remainingBalance.toLocaleString()}
                     </td>
-                    <td className="p-2">
-                      <span className="px-1.5 py-0.2 rounded-full text-[9px] font-bold bg-stone-100 text-stone-700">
+                    <td className="p-2 text-center">
+                      <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold ${
+                        d.status === 'Paid' ? 'bg-emerald-100 text-emerald-800' :
+                        d.status === 'Partial' ? 'bg-amber-100 text-amber-800' : 'bg-rose-100 text-rose-800'
+                      }`}>
                         {d.status}
                       </span>
                     </td>
@@ -380,6 +463,18 @@ export const CustomersPage: React.FC = () => {
                 ))}
               </tbody>
             </table>
+          </div>
+
+          {/* Signatures & Formal Stamp */}
+          <div className="pt-6 grid grid-cols-2 gap-8 text-center text-xs">
+            <div className="signature-box pt-3 border-t border-stone-300">
+              <div className="font-bold text-stone-900">Authorized Farm Officer</div>
+              <div className="text-[10px] text-stone-400">BA Dairy Farm Accounts & Dispatch</div>
+            </div>
+            <div className="signature-box pt-3 border-t border-stone-300">
+              <div className="font-bold text-stone-900">Customer Acknowledgement</div>
+              <div className="text-[10px] text-stone-400">Verified & Confirmed By Buyer</div>
+            </div>
           </div>
         </div>
       </Modal>

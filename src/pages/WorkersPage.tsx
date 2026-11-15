@@ -3,7 +3,11 @@ import { api } from '../api/api.ts';
 import { Modal } from '../components/Modal.tsx';
 import { UserCheck, Plus, DollarSign, History, Calendar } from 'lucide-react';
 
-export const WorkersPage: React.FC = () => {
+interface WorkersPageProps {
+  autoOpenNonce?: number;
+}
+
+export const WorkersPage: React.FC<WorkersPageProps> = ({ autoOpenNonce }) => {
   const [workers, setWorkers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [showAddWorkerModal, setShowAddWorkerModal] = useState(false);
@@ -44,6 +48,12 @@ export const WorkersPage: React.FC = () => {
   useEffect(() => {
     loadData();
   }, []);
+
+  useEffect(() => {
+    if (autoOpenNonce) {
+      setShowAddWorkerModal(true);
+    }
+  }, [autoOpenNonce]);
 
   const handleSaveWorker = async () => {
     if (!workerForm.name.trim()) {

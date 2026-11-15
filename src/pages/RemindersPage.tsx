@@ -6,6 +6,7 @@ import { Bell, Plus, CheckCircle, Trash2, ArrowRight, AlertTriangle, Clock } fro
 
 interface RemindersPageProps {
   onNavigateToModule: (module: NavItem) => void;
+  autoOpenNonce?: number;
 }
 
 const moduleToTab: Record<string, NavItem> = {
@@ -28,7 +29,7 @@ const moduleToTab: Record<string, NavItem> = {
   animals: 'animals',
 };
 
-export const RemindersPage: React.FC<RemindersPageProps> = ({ onNavigateToModule }) => {
+export const RemindersPage: React.FC<RemindersPageProps> = ({ onNavigateToModule, autoOpenNonce }) => {
   const [tasks, setTasks] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState('');
@@ -57,6 +58,12 @@ export const RemindersPage: React.FC<RemindersPageProps> = ({ onNavigateToModule
   useEffect(() => {
     loadData();
   }, [statusFilter]);
+
+  useEffect(() => {
+    if (autoOpenNonce) {
+      setShowAddModal(true);
+    }
+  }, [autoOpenNonce]);
 
   const handleSaveTask = async () => {
     if (!formData.title.trim()) {
