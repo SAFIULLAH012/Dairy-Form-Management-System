@@ -105,12 +105,21 @@ namespace DairyFarmERP
             string nodePath = FindNodeExecutable();
             if (string.IsNullOrEmpty(nodePath))
             {
-                MessageBox.Show(
-                    "Node.js runtime was not found.\nPlease make sure Node.js is installed on this PC.",
-                    "Dairy Farm ERP - Missing Runtime",
-                    MessageBoxButtons.OK,
-                    MessageBoxIcon.Error
+                DialogResult res = MessageBox.Show(
+                    "Node.js runtime was not detected on this computer.\n\n" +
+                    "To run BA Farm Management System, you need Node.js:\n" +
+                    "1. Install Node.js (LTS version) from https://nodejs.org\n" +
+                    "   OR\n" +
+                    "2. Place a portable 'node.exe' directly inside this app folder.\n\n" +
+                    "Would you like to open https://nodejs.org to download it now?",
+                    "BA Farm Management System - Setup Requirement",
+                    MessageBoxButtons.YesNo,
+                    MessageBoxIcon.Information
                 );
+                if (res == DialogResult.Yes)
+                {
+                    try { Process.Start("https://nodejs.org/"); } catch { }
+                }
                 return false;
             }
 
@@ -246,12 +255,21 @@ namespace DairyFarmERP
 
         private static string FindNodeExecutable()
         {
+            // 1. Check portable node runtime inside app directory or runtime/ subfolder
+            string localNode = Path.Combine(baseDir, "node.exe");
+            if (File.Exists(localNode)) return localNode;
+
+            string runtimeNode = Path.Combine(baseDir, "runtime", "node.exe");
+            if (File.Exists(runtimeNode)) return runtimeNode;
+
+            // 2. Standard system locations
             string standardPath = @"C:\Program Files\nodejs\node.exe";
             if (File.Exists(standardPath)) return standardPath;
 
             string standardPathX86 = @"C:\Program Files (x86)\nodejs\node.exe";
             if (File.Exists(standardPathX86)) return standardPathX86;
 
+            // 3. System PATH directories
             string pathEnv = Environment.GetEnvironmentVariable("PATH") ?? "";
             string[] dirs = pathEnv.Split(';');
             foreach (string dir in dirs)
@@ -260,7 +278,7 @@ namespace DairyFarmERP
                 if (File.Exists(full)) return full;
             }
 
-            return "node.exe";
+            return null;
         }
 
         private static string FindBrowserExecutable()
