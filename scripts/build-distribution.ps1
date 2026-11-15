@@ -1,4 +1,4 @@
-﻿# BA Dairy Farm ERP - Automated Distribution Packager
+# BA Dairy Farm ERP - Automated Distribution Packager
 $ErrorActionPreference = "Stop"
 
 $baseDir = Split-Path -Parent $PSScriptRoot

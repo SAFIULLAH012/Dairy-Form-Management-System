@@ -48,6 +48,9 @@ desktop.ini
 *.tmp
 *.temp
 sfx_config.txt
+runtime/
+release/
+installer_output/
 loading.html
 
 # Electron cache

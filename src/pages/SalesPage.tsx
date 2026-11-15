@@ -1,7 +1,7 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { api } from '../api/api.ts';
 import { Modal } from '../components/Modal.tsx';
-import { Truck, Plus, DollarSign, Printer, Calendar, ArrowRight } from 'lucide-react';
+import { Truck, Plus, DollarSign, Printer, Calendar, ArrowRight, Search, X, RotateCcw, Building2 } from 'lucide-react';
 
 interface SalesPageProps {
   autoOpenNonce?: number;
@@ -17,6 +17,11 @@ export const SalesPage: React.FC<SalesPageProps> = ({ autoOpenNonce }) => {
   const [showInvoiceModal, setShowInvoiceModal] = useState(false);
   const [showPaymentModal, setShowPaymentModal] = useState<any | null>(null);
   const [selectedInvoiceToPrint, setSelectedInvoiceToPrint] = useState<any | null>(null);
+
+  // Autocomplete & Custom Input States
+  const [customerQuery, setCustomerQuery] = useState('');
+  const [showCustomerDropdown, setShowCustomerDropdown] = useState(false);
+  const customerDropdownRef = useRef<HTMLDivElement>(null);
 
   // Invoice Form
   const [invoiceForm, setInvoiceForm] = useState({
@@ -88,31 +93,97 @@ export const SalesPage: React.FC<SalesPageProps> = ({ autoOpenNonce }) => {
     }
   }, [autoOpenNonce]);
 
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (customerDropdownRef.current && !customerDropdownRef.current.contains(e.target as Node)) {
+        setShowCustomerDropdown(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const filteredCustomers = customers.filter(c => {
+    const q = customerQuery.toLowerCase().trim();
+    if (!q) return true;
+    return (
+      (c.name && c.name.toLowerCase().includes(q)) ||
+      (c.company && c.company.toLowerCase().includes(q)) ||
+      (c.phone && c.phone.toLowerCase().includes(q))
+    );
+  });
+
+  const handleResetForm = () => {
+    setInvoiceForm({
+      customerId: '',
+      customerName: '',
+      receiverName: '',
+      date: new Date().toISOString().slice(0, 10),
+      time: new Date().toTimeString().slice(0, 5),
+      litres: '',
+      fatPercent: '',
+      snfPercent: '',
+      ratePerL: '',
+      paymentTermsDays: '7',
+      initialPaidAmount: '',
+      notes: '',
+    });
+    setCustomerQuery('');
+    setShowCustomerDropdown(false);
+  };
+
   const totalCalc =
     (parseFloat(invoiceForm.litres) || 0) * (parseFloat(invoiceForm.ratePerL) || 0);
 
   const handleSaveInvoice = async () => {
-    if (!invoiceForm.customerId) {
-      alert('Please select or add a customer first.');
+    const finalCustomerName = (customerQuery || invoiceForm.customerName).trim();
+    if (!finalCustomerName) {
+      alert('Please enter or select a customer or company name.');
       return;
     }
-    if (!invoiceForm.litres || parseFloat(invoiceForm.litres) <= 0) {
-      alert('Please enter valid litres.');
+    const litresNum = parseFloat(invoiceForm.litres);
+    if (isNaN(litresNum) || litresNum <= 0) {
+      alert('Please enter valid milk quantity in litres.');
+      return;
+    }
+    const rateNum = parseFloat(invoiceForm.ratePerL);
+    if (isNaN(rateNum) || rateNum <= 0) {
+      alert('Please enter a valid rate per litre.');
       return;
     }
 
     try {
+      let targetCustomerId = invoiceForm.customerId;
+      if (!targetCustomerId) {
+        const existing = customers.find(
+          c => c.name.toLowerCase() === finalCustomerName.toLowerCase() ||
+               (c.company && c.company.toLowerCase() === finalCustomerName.toLowerCase())
+        );
+        if (existing) {
+          targetCustomerId = existing.id;
+        } else {
+          const created = await api.createCustomer({
+            name: finalCustomerName,
+            company: finalCustomerName,
+            defaultRatePerL: rateNum,
+            paymentTermsDays: parseInt(invoiceForm.paymentTermsDays, 10) || 7,
+            status: 'Active',
+          });
+          targetCustomerId = created.id;
+        }
+      }
+
       await api.createDelivery({
-        customerId: invoiceForm.customerId,
-        customerName: invoiceForm.customerName,
+        customerId: targetCustomerId,
+        customerName: finalCustomerName,
         receiverName: invoiceForm.receiverName,
         date: invoiceForm.date,
         time: invoiceForm.time,
-        litres: parseFloat(invoiceForm.litres),
+        litres: litresNum,
         fatPercent: invoiceForm.fatPercent ? parseFloat(invoiceForm.fatPercent) : undefined,
         snfPercent: invoiceForm.snfPercent ? parseFloat(invoiceForm.snfPercent) : undefined,
-        ratePerL: parseFloat(invoiceForm.ratePerL),
-        paymentTermsDays: parseInt(invoiceForm.paymentTermsDays, 10),
+        ratePerL: rateNum,
+        paymentTermsDays: parseInt(invoiceForm.paymentTermsDays, 10) || 7,
         initialPaidAmount: invoiceForm.initialPaidAmount
           ? parseFloat(invoiceForm.initialPaidAmount)
           : 0,
@@ -161,18 +232,6 @@ export const SalesPage: React.FC<SalesPageProps> = ({ autoOpenNonce }) => {
 
         <button
           onClick={() => {
-            if (customers.length > 0) {
-              setInvoiceForm(prev => ({
-                ...prev,
-                customerId: customers[0].id,
-                customerName: customers[0].name,
-                ratePerL: String(customers[0].defaultRatePerL || 210),
-                paymentTermsDays: String(customers[0].paymentTermsDays || 7),
-
-                initialPaidAmount: '0',
-                notes: '',
-              }));
-            }
             setShowInvoiceModal(true);
           }}
           className="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-bold text-white bg-[#16734b] hover:bg-[#125e3d] rounded-lg shadow-xs transition-colors cursor-pointer"
@@ -311,49 +370,138 @@ export const SalesPage: React.FC<SalesPageProps> = ({ autoOpenNonce }) => {
         onClose={() => setShowInvoiceModal(false)}
         maxWidth="lg"
         footer={
-          <>
+          <div className="flex items-center justify-between w-full">
             <button
-              onClick={() => setShowInvoiceModal(false)}
-              className="px-4 py-2 text-xs font-semibold text-stone-600 hover:bg-stone-100 rounded-lg cursor-pointer"
+              type="button"
+              onClick={handleResetForm}
+              className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-rose-700 bg-rose-50 hover:bg-rose-100 border border-rose-200 rounded-lg cursor-pointer transition-colors"
+              title="Clear all fields and erase data"
             >
-              Cancel
+              <RotateCcw className="w-3.5 h-3.5" />
+              <span>Erase All Data</span>
             </button>
-            <button
-              onClick={handleSaveInvoice}
-              className="px-4 py-2 text-xs font-bold text-white bg-[#16734b] hover:bg-[#125e3d] rounded-lg cursor-pointer"
-            >
-              Issue Invoice
-            </button>
-          </>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setShowInvoiceModal(false)}
+                className="px-4 py-2 text-xs font-semibold text-stone-600 hover:bg-stone-100 rounded-lg cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleSaveInvoice}
+                className="px-4 py-2 text-xs font-bold text-white bg-[#16734b] hover:bg-[#125e3d] rounded-lg cursor-pointer shadow-xs"
+              >
+                Issue Invoice
+              </button>
+            </div>
+          </div>
         }
       >
         <div className="space-y-3.5 text-xs">
           <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="block text-stone-600 font-semibold mb-1">
-                Company / Customer *
-              </label>
-              <select
-                value={invoiceForm.customerId}
-                onChange={e => {
-                  const cust = customers.find(c => c.id === e.target.value);
-                  setInvoiceForm({
-                    ...invoiceForm,
-                    customerId: e.target.value,
-                    customerName: cust?.name || '',
-                    ratePerL: String(cust?.defaultRatePerL || 210),
-                    paymentTermsDays: String(cust?.paymentTermsDays || 7),
-                  });
-                }}
-                className="w-full px-3 py-1.5 border border-stone-200 rounded-lg bg-white font-medium"
-              >
-                {customers.map(c => (
-                  <option key={c.id} value={c.id}>
-                    {c.name} (Rate: Rs. {c.defaultRatePerL})
-                  </option>
-                ))}
-              </select>
+            {/* Searchable Autocomplete Customer / Company Field */}
+            <div className="relative" ref={customerDropdownRef}>
+              <div className="flex items-center justify-between mb-1">
+                <label className="block text-stone-700 font-bold">
+                  Company / Customer *
+                </label>
+                {(customerQuery || invoiceForm.customerName) && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setCustomerQuery('');
+                      setInvoiceForm(prev => ({ ...prev, customerId: '', customerName: '' }));
+                    }}
+                    className="text-[10px] text-stone-400 hover:text-rose-600 font-medium cursor-pointer"
+                  >
+                    Clear Selection
+                  </button>
+                )}
+              </div>
+
+              <div className="relative">
+                <input
+                  type="text"
+                  placeholder="Type customer or company name (or pick from list)..."
+                  value={customerQuery || invoiceForm.customerName}
+                  onChange={e => {
+                    const val = e.target.value;
+                    setCustomerQuery(val);
+                    setInvoiceForm(prev => ({
+                      ...prev,
+                      customerName: val,
+                      customerId: '',
+                    }));
+                    setShowCustomerDropdown(true);
+                  }}
+                  onFocus={() => setShowCustomerDropdown(true)}
+                  className="w-full pl-8 pr-8 py-2 text-xs font-semibold bg-white border border-stone-300 rounded-lg focus:border-emerald-600 focus:outline-none"
+                />
+                <Search className="w-4 h-4 text-stone-400 absolute left-2.5 top-2.5 pointer-events-none" />
+                {(customerQuery || invoiceForm.customerName) && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setCustomerQuery('');
+                      setInvoiceForm(prev => ({ ...prev, customerId: '', customerName: '' }));
+                      setShowCustomerDropdown(true);
+                    }}
+                    className="absolute right-2.5 top-2.5 text-stone-400 hover:text-stone-600 cursor-pointer"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                )}
+              </div>
+
+              {/* Autocomplete Suggestions Dropdown */}
+              {showCustomerDropdown && (
+                <div className="absolute z-30 left-0 right-0 mt-1 max-h-56 overflow-y-auto bg-white border border-stone-200 rounded-xl shadow-xl py-1 divide-y divide-stone-50">
+                  {filteredCustomers.length > 0 ? (
+                    filteredCustomers.map(c => (
+                      <div
+                        key={c.id}
+                        onMouseDown={() => {
+                          setCustomerQuery(c.name);
+                          setInvoiceForm(prev => ({
+                            ...prev,
+                            customerId: c.id,
+                            customerName: c.name,
+                            ratePerL: String(c.defaultRatePerL || prev.ratePerL || 210),
+                            paymentTermsDays: String(c.paymentTermsDays || prev.paymentTermsDays || 7),
+                          }));
+                          setShowCustomerDropdown(false);
+                        }}
+                        className="px-3 py-2 hover:bg-emerald-50 cursor-pointer flex items-center justify-between transition-colors"
+                      >
+                        <div>
+                          <div className="font-bold text-stone-900 text-xs flex items-center gap-1.5">
+                            <Building2 className="w-3.5 h-3.5 text-emerald-700 shrink-0" />
+                            <span>{c.name}</span>
+                            {c.company && c.company !== c.name && (
+                              <span className="text-[10px] text-stone-400 font-normal">({c.company})</span>
+                            )}
+                          </div>
+                          <div className="text-[10px] text-stone-500 ml-5">
+                            {c.phone ? `📞 ${c.phone} · ` : ''}Terms: {c.paymentTermsDays || 7} Days
+                          </div>
+                        </div>
+                        <span className="text-[11px] font-extrabold text-emerald-800 bg-emerald-100/70 border border-emerald-200 px-2 py-0.5 rounded-md">
+                          Rs. {c.defaultRatePerL}/L
+                        </span>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="p-3 text-center text-xs text-stone-500">
+                      <div>No existing customer found matching "{customerQuery}".</div>
+                      <div className="text-[10px] text-emerald-700 font-bold mt-1">
+                        ✓ You can still issue the invoice; this new customer will be automatically registered!
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
+
             <div>
               <label className="block text-stone-600 font-semibold mb-1">Received by (Person)</label>
               <input
@@ -361,7 +509,7 @@ export const SalesPage: React.FC<SalesPageProps> = ({ autoOpenNonce }) => {
                 placeholder="e.g. Ahmed, Driver"
                 value={invoiceForm.receiverName}
                 onChange={e => setInvoiceForm({ ...invoiceForm, receiverName: e.target.value })}
-                className="w-full px-3 py-1.5 border border-stone-200 rounded-lg"
+                className="w-full px-3 py-2 border border-stone-200 rounded-lg text-xs"
               />
             </div>
           </div>
